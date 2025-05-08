@@ -49,7 +49,7 @@ async def addInstance(db_user: str, db_password: str, instance_resource_id: Opti
     if port:
         add_instance_request.port = port
     if instance_resource_id:
-        add_instance_request.instance_resource_id = instance_resource_id
+        add_instance_request.instance_id = instance_resource_id
     if region:
         add_instance_request.region = region
     try:
