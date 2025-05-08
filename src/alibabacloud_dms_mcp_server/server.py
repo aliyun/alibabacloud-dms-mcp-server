@@ -30,7 +30,7 @@ def create_client() -> dms_enterprise20181101Client:
 
             """)
 async def addInstance(db_user: str, db_password: str, instance_resource_id: Optional[str] = None,
-                      host: Optional[str] = None, port: str = None, region: Optional[str] = None) -> Dict[str, Any]:
+                      host: Optional[str] = None, port: Optional[str] = None, region: Optional[str] = None) -> Dict[str, Any]:
     if not db_user or not isinstance(db_user, str):
         logging.error("Invalid db_user parameter: %s", db_user)
         return "db_user must be a non-empty string"
