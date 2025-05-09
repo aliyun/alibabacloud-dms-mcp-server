@@ -35,15 +35,19 @@ def create_client() -> dms_enterprise20181101Client:
             instance_resource_id (str, optional): The resource id of the instance, typically assigned by the cloud provider.
             host (str, optional): The hostname of the database instance.
             port (str, optional): The connection port number.
-            region (int, optional): The region where the instance is located (e.g., "cn-hangzhou").
+            region (str, optional): The region where the instance is located (e.g., "cn-hangzhou").
             Returns:
                 Dict[str, Any]: A dictionary containing instance details with these keys:
                     - instance_id: Unique instance identifier in DMS.
                     - host: The hostname of the database instance.
                     - port: The connection port number.
             """)
-async def addInstance(db_user: str, db_password: str, instance_resource_id: Optional[str] = None,
-                      host: Optional[str] = None, port: Optional[str] = None, region: Optional[str] = None) -> Dict[str, Any]:
+async def addInstance(db_user: str,
+                      db_password: str,
+                      instance_resource_id: Optional[str] = None,
+                      host: Optional[str] = None,
+                      port: Optional[str] = None,
+                      region: Optional[str] = None) -> Dict[str, Any]:
     if not db_user or not isinstance(db_user, str):
         logging.error("Invalid db_user parameter: %s", db_user)
         return "db_user must be a non-empty string"
@@ -91,7 +95,9 @@ async def addInstance(db_user: str, db_password: str, instance_resource_id: Opti
                     - InstanceType: Database Engine type
                     - InstanceAlias: Instance alias in DMS
             """)
-async def getInstance(host: str, port: str, sid: Optional[str] = None) -> Dict[str, Any]:
+async def getInstance(host: str,
+                      port: str,
+                      sid: Optional[str] = None) -> Dict[str, Any]:
     """
           Retrieve detailed instance information from DMS.
           Parameters:
@@ -356,7 +362,7 @@ async def getMetaTableDetailInfo(table_guid: str) -> Dict[str, Any]:
           description="""
              Execute SQL script against a database in DMS and return structured results.
           Parameters:
-            database_id (int): Required DMS databaseId. Obtained via getDatabase tool.
+            database_id (str): Required DMS databaseId. Obtained via getDatabase tool.
             script (str): SQL script to execute.
           Returns:
             Dict[str, Any] containing:
