@@ -171,7 +171,20 @@ async def searchDatabase(search_key: str, page_number: int = 1, page_size: int =
         data = response.body.to_map()
         search_db_list = data.get('SearchDatabaseList', {})
         db_list = search_db_list.get('SearchDatabase', [])
-        return db_list
+        result_list = []
+        for db in db_list:
+            db_info = {
+                "DatabaseId": db.get("DatabaseId", ""),
+                "Host": db.get("Host", ""),
+                "Port": db.get("Port", ""),
+                "DbType": db.get("DbType", ""),
+            }
+            if db.get("CatalogName") != 'def':
+                db_info["SchemaName"] = f'{db.get("CatalogName", "")}.{db.get("SchemaName", "")}'
+            else:
+                db_info["SchemaName"] = db.get("SchemaName", "")
+            result_list.append(db_info)
+        return result_list
     except Exception as error:
         logging.error(error)
         raise error
@@ -393,7 +406,6 @@ async def executeScript(database_id: str, script: str, logic: bool = False) -> D
             knowledge (Optional[str]): Additional context or database knowledge to improve SQL generation.
           
           Returns:
-            Dict[str, Any]: A dictionary containing:
               - Sql (str): The generated SQL query based on the natural language question
           """)
 async def nl2sql(database_id: str, question: str, knowledge: Optional[str] = None) -> Dict[str, Any]:
