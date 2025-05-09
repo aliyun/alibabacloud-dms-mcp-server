@@ -10,8 +10,11 @@
 - Supports full Alibaba Cloud series: RDS, PolarDB, ADB series, Lindorm series, TableStore series, MaxCompute series.
 - Supports mainstream databases/warehouses: MySQL, MariaDB, PostgreSQL, Oracle, SQLServer, Redis, MongoDB, StarRocks, Clickhouse, SelectDB, DB2, OceanBase, Gauss, BigQuery, etc.
 
-<img src="images/architecture-0508.jpg" alt="Ding" width="60%">
+<a href="https://glama.ai/mcp/servers/@aliyun/alibabacloud-dms-mcp-server">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/@aliyun/alibabacloud-dms-mcp-server/badge" alt="Alibaba Cloud DMS Server MCP server" />
+</a>
 
+<img src="images/architecture-0508.jpg" alt="Ding" width="60%">
 
 ---
 
