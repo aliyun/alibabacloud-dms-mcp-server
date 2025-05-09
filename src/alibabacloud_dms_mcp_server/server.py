@@ -28,7 +28,19 @@ def create_client() -> dms_enterprise20181101Client:
 
 @mcp.tool(name="addInstance",
           description="""
-
+          Add an instance to DMS. If the instance already exists, it will return the existing instance information.
+          Parameters:
+            db_user (str): The username used to connect to the database.
+            db_password (str): The password used to connect to the database.
+            instance_resource_id (str, optional): The resource id of the instance, typically assigned by the cloud provider.
+            host (str, optional): The hostname of the database instance.
+            port (str, optional): The connection port number.
+            region (int, optional): The region where the instance is located (e.g., "cn-hangzhou").
+            Returns:
+                Dict[str, Any]: A dictionary containing instance details with these keys:
+                    - instance_id: Unique instance identifier in DMS.
+                    - host: The hostname of the database instance.
+                    - port: The connection port number.
             """)
 async def addInstance(db_user: str, db_password: str, instance_resource_id: Optional[str] = None,
                       host: Optional[str] = None, port: Optional[str] = None, region: Optional[str] = None) -> Dict[str, Any]:
@@ -69,8 +81,8 @@ async def addInstance(db_user: str, db_password: str, instance_resource_id: Opti
           description="""
           Retrieve detailed instance information from DMS.     
           Parameters:
-            host (str): The hostname or IP address of the database instance
-            port (int): Connection port number (valid range: 1-65535)
+            host (str): The hostname of the database instance.
+            port (str): The connection port number.
             sid (Optional[str]): Required for Oracle like databases. Defaults to None.
             Returns:
                 Dict[str, Any]: A dictionary containing instance details with these keys:
