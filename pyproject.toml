@@ -8,7 +8,7 @@ authors = [
 ]
 requires-python = ">=3.12"
 dependencies = [
-    "alibabacloud-dms-enterprise20181101>=1.70.2",
+    "alibabacloud-dms-enterprise20181101>=1.71.0",
     "alibabacloud-tea-openapi==0.4.0rc3",
     "httpx>=0.28.1",
     "mcp[cli]>=1.6.0",
