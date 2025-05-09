@@ -385,6 +385,7 @@ async def executeScript(database_id: str, script: str, logic: bool = False) -> D
           
           This tool converts natural language questions into SQL queries that can be executed against a database.
           If you don't have the database_id, use the searchDatabase tool first to identify the correct database.
+          The sql generated could be executed via DMS executeScript tool provided in this server if necessary.
           
           Parameters:
             question (str): Natural language question about the database that needs to be converted to SQL.
@@ -394,10 +395,6 @@ async def executeScript(database_id: str, script: str, logic: bool = False) -> D
           Returns:
             Dict[str, Any]: A dictionary containing:
               - Sql (str): The generated SQL query based on the natural language question
-              - Tables (List[Dict]): Tables referenced in the query
-              - SimilarSql (List[Dict]): Similar SQL examples that may be helpful
-              - Success (bool): Whether the conversion was successful
-              - RequestId (str): Unique request identifier
           """)
 async def nl2sql(database_id: str, question: str, knowledge: Optional[str] = None) -> Dict[str, Any]:
     if not isinstance(question, str) or not question.strip():
@@ -416,7 +413,9 @@ async def nl2sql(database_id: str, question: str, knowledge: Optional[str] = Non
             logging.warning("Empty or invalid response received from DMS service")
             return []
         data = response.body.to_map()
-        return data
+        if data:
+            sql = data.get('Data', {}).get('Sql')
+        return sql
     except Exception as error:
         logging.error(error)
         raise error
