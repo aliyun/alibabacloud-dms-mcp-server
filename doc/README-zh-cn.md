@@ -25,6 +25,68 @@
 - **取数**：通过SQL自动路由准确数据源获得数据，为上层业务提供数据支持  
 - **安全**：精细的访问控制和可审计性  
 
+
+## 工具清单
+
+### 元数据相关
+#### addInstance：将实例添加到 DMS。如果实例已存在，则返回已有实例信息。
+
+- **db_user** (字符串, 必需): 用于连接数据库的用户名。
+- **db_password** (字符串, 必需): 用于连接数据库的密码。
+- **instance_resource_id** (字符串, 可选): 实例的资源 ID，通常由云服务提供商分配。
+- **host** (字符串, 可选): 实例的连接地址。
+- **port** (字符串, 可选): 实例的连接端口号。
+- **region** (字符串, 可选): 实例所在的区域（例如 "cn-hangzhou"）。
+
+#### getInstance：根据 host 和 port 信息从 DMS 中获取实例详细信息。
+
+- **host** (字符串, 必需): 实例的连接地址。
+- **port** (字符串, 必需): 实例的连接端口号。
+- **sid** (字符串, 可选): Oracle 类数据库所需，默认为 None。
+
+#### searchDatabase：根据 schemaName 在 DMS 中搜索数据库。
+
+- **search_key** (字符串, 必需): schemaName。
+- **page_number** (整数, 可选): 要检索的页码（从 1 开始），默认为 1。
+- **page_size** (整数, 可选): 每页的结果数量，最多 1000，默认为 200。
+
+#### getDatabase：从 DMS 中获取特定数据库的详细信息。
+
+- **host** (字符串, 必需): 实例的连接地址。
+- **port** (字符串, 必需): 实例的连接端口号。
+- **schema_name** (字符串, 必需): 数据库名。
+- **sid** (字符串, 可选): Oracle 类数据库所需，默认为 None。
+
+#### listTable：根据 databaseId 和 tableName 在 DMS 中搜索数据表。
+
+- **database_id** (字符串, 必需): 用于限定搜索范围的数据库 ID（可通过 getDatabase 工具获取）。
+- **search_name** (字符串, 必需): 作为搜索关键词的非空字符串，用于匹配表名。
+- **page_number** (整数, 可选): 分页页码（默认：1）。
+- **page_size** (整数, 可选): 每页结果数量（默认：200，最大：200）。
+
+#### getTableDetailInfo：获取特定数据表的详细元数据信息，包括字段和索引详情。
+
+- **table_guid** (字符串, 必需): 表的唯一标识符（格式：dmsTableId.schemaName.tableName），可通过 searchTable 或 listTable 工具获取。
+
+---
+
+### SQL 执行相关
+
+#### executeScript：通过 DMS 执行 SQL 脚本并返回结果。
+
+- **database_id** (字符串, 必需): DMS 数据库 ID，可通过 getDatabase 工具获取。
+- **script** (字符串, 必需): 要执行的 SQL 脚本内容。
+
+---
+
+### NL2SQL 相关
+
+#### nl2sql：将自然语言问题转换为可执行的 SQL 查询。
+
+- **question** (字符串, 必需): 需要转换为 SQL 的自然语言问题。
+- **database_id** (整数, 必需): DMS 数据库 ID，可通过 getDatabase 工具获取。
+- **knowledge** (字符串, 可选): 用于辅助 SQL 生成的额外上下文或数据库知识。
+
 ---
 
 ## 支持的数据源
