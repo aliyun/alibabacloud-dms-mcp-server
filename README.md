@@ -11,6 +11,7 @@
 - Supports mainstream databases/warehouses: MySQL, MariaDB, PostgreSQL, Oracle, SQLServer, Redis, MongoDB, StarRocks, Clickhouse, SelectDB, DB2, OceanBase, Gauss, BigQuery, etc.
 
 <img src="images/architecture-0508.jpg" alt="Ding" width="60%">
+
 [//]: # (<img src="https://dms-static.oss-cn-hangzhou.aliyuncs.com/mcp-readme/architecture-0508.jpg" alt="Ding" width="60%">)
 
 
