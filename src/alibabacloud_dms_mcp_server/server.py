@@ -377,7 +377,6 @@ async def getMetaTableDetailInfo(table_guid: str) -> Dict[str, Any]:
 
           """)
 async def executeScript(database_id: str, script: str, logic: bool = False) -> Dict[str, Any]:
-
     if not isinstance(script, str) or not script.strip():
         error_msg = "Script parameter must be a non-empty string"
         logging.error(error_msg)
@@ -400,16 +399,16 @@ async def executeScript(database_id: str, script: str, logic: bool = False) -> D
 
 @mcp.tool(name="nl2sql",
           description="""Generate SQL from natural language questions about database data.
-          
+
           This tool converts natural language questions into SQL queries that can be executed against a database.
           If you don't have the database_id, use the searchDatabase tool first to identify the correct database.
           The sql generated could be executed via DMS executeScript tool provided in this server if necessary.
-          
+
           Parameters:
             question (str): Natural language question about the database that needs to be converted to SQL.
             database_id (int): DMS databaseId. If not provided, searchDatabase will be used first.
             knowledge (Optional[str]): Additional context or database knowledge to improve SQL generation.
-          
+
           Returns:
             Dict[str, Any]: A dictionary containing:
               - Sql (str): The generated SQL query based on the natural language question
