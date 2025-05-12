@@ -11,6 +11,7 @@
 - Supports mainstream databases/warehouses: MySQL, MariaDB, PostgreSQL, Oracle, SQLServer, Redis, MongoDB, StarRocks, Clickhouse, SelectDB, DB2, OceanBase, Gauss, BigQuery, etc.
 
 <img src="images/architecture-0508.jpg" alt="Ding" width="60%">
+[//]: # (<img src="https://dms-static.oss-cn-hangzhou.aliyuncs.com/mcp-readme/architecture-0508.jpg" alt="Ding" width="60%">)
 
 
 ---
@@ -122,12 +123,13 @@ Key features via MCP include:
 ---
 
 ## Getting Started
-### Download the Code
+### Option 1: Run from Source Code
+#### Download the Code
 ```bash
 git clone https://github.com/aliyun/alibabacloud-dms-mcp-server.git
 ```
 
-### Configure MCP Client
+#### Configure MCP Client
 Add the following content to the configuration file:
 ```json
 "mcpServers": {
@@ -147,6 +149,24 @@ Add the following content to the configuration file:
   }
 }
 ```
+### Option 2: Run via PyPI Package
+
+```json
+"mcpServers": {
+  "dms-mcp-server": {
+    "command": "uvx",
+    "args": [
+      "alibabacloud-dms-mcp-server@latest"
+    ],
+    "env": {
+      "ALIBABA_CLOUD_ACCESS_KEY_ID": "access_id",
+      "ALIBABA_CLOUD_ACCESS_KEY_SECRET": "access_key",
+      "ALIBABA_CLOUD_SECURITY_TOKEN": "sts_security_token optional, required when using STS Token"
+    }
+  }
+}
+```
+
 
 ---
 
@@ -155,6 +175,8 @@ Add the following content to the configuration file:
 For any questions or suggestions, join the[Alibaba Cloud DMS MCP Group](https://h5.dingtalk.com/circle/joinCircle.html?corpId=dinga0bc5ccf937dad26bc961a6cb783455b&token=2f373e6778dcde124e1d3f22119a325b&groupCode=v1,k1,NqFGaQek4YfYPXVECdBUwn+OtL3y7IHStAJIO0no1qY=&from=group&ext=%7B%22channel%22%3A%22QR_GROUP_NORMAL%22%2C%22extension%22%3A%7B%22groupCode%22%3A%22v1%2Ck1%2CNqFGaQek4YfYPXVECdBUwn%2BOtL3y7IHStAJIO0no1qY%3D%22%2C%22groupFrom%22%3A%22group%22%7D%2C%22inviteId%22%3A2823675041%2C%22orgId%22%3A784037757%2C%22shareType%22%3A%22GROUP%22%7D&origin=11) (DingTalk Group ID: 129600002740) .
 
 <img src="images/ding-en.jpg" alt="Ding" width="40%">
+
+[//]: # (<img src="http://dms-static.oss-cn-hangzhou.aliyuncs.com/mcp-readme/ding-en.jpg" alt="Ding" width="40%">)
 
 
 ## License

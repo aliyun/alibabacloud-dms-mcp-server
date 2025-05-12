@@ -11,6 +11,9 @@
 
 <img src="../images/architecture-0508.jpg" alt="Ding" width="60%">
 
+[//]: # (<img src="https://dms-static.oss-cn-hangzhou.aliyuncs.com/mcp-readme/architecture-0508.jpg" alt="Ding" width="60%">)
+
+
 ---
 
 ## 核心特性
@@ -117,12 +120,14 @@
 ---
 
 ## 快速开始
-### 下载代码
+
+### 方案一 使用源码运行
+#### 下载代码
 ```bash
 git clone https://github.com/aliyun/alibabacloud-dms-mcp-server.git
 ```
 
-### 配置MCP客户端
+#### 配置MCP客户端
 在配置文件中添加以下内容：
 ```json
 "mcpServers": {
@@ -143,6 +148,23 @@ git clone https://github.com/aliyun/alibabacloud-dms-mcp-server.git
 }
 ```
 
+### 方案二 使用PyPI包运行
+```json
+"mcpServers": {
+  "dms-mcp-server": {
+    "command": "uvx",
+    "args": [
+      "alibabacloud-dms-mcp-server@latest"
+    ],
+    "env": {
+      "ALIBABA_CLOUD_ACCESS_KEY_ID": "access_id",
+      "ALIBABA_CLOUD_ACCESS_KEY_SECRET": "access_key",
+      "ALIBABA_CLOUD_SECURITY_TOKEN": "sts_security_token optional, required when using STS Token"
+    }
+  }
+}
+```
+
 ---
 
 ## Contact us
@@ -150,6 +172,9 @@ git clone https://github.com/aliyun/alibabacloud-dms-mcp-server.git
 如果您有使用问题或建议, 请加入[Alibaba Cloud DMS MCP讨论组](https://h5.dingtalk.com/circle/joinCircle.html?corpId=dinga0bc5ccf937dad26bc961a6cb783455b&token=2f373e6778dcde124e1d3f22119a325b&groupCode=v1,k1,NqFGaQek4YfYPXVECdBUwn+OtL3y7IHStAJIO0no1qY=&from=group&ext=%7B%22channel%22%3A%22QR_GROUP_NORMAL%22%2C%22extension%22%3A%7B%22groupCode%22%3A%22v1%2Ck1%2CNqFGaQek4YfYPXVECdBUwn%2BOtL3y7IHStAJIO0no1qY%3D%22%2C%22groupFrom%22%3A%22group%22%7D%2C%22inviteId%22%3A2823675041%2C%22orgId%22%3A784037757%2C%22shareType%22%3A%22GROUP%22%7D&origin=11) (钉钉群号:129600002740) 进行讨论.
 
 <img src="../images/ding-en.jpg" alt="Ding" width="40%">
+
+[//]: # (<img src="http://dms-static.oss-cn-hangzhou.aliyuncs.com/mcp-readme/ding-zh-cn.jpg" alt="Ding" width="60%">)
+
 
 
 ## License
