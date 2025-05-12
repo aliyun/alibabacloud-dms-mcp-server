@@ -101,7 +101,7 @@ sdist = { url = "https://files.pythonhosted.org/packages/a0/87/1d7019d23891897cb
 
 [[package]]
 name = "alibabacloud-dms-enterprise20181101"
-version = "1.71.0"
+version = "1.72.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "alibabacloud-endpoint-util" },
@@ -109,9 +109,9 @@ dependencies = [
     { name = "alibabacloud-tea-openapi" },
     { name = "alibabacloud-tea-util" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/15/18/d5a61b40bbe781be19f159e9caca814c4f9f73859d38a7012baa4d46024b/alibabacloud_dms-enterprise20181101-1.71.0.tar.gz", hash = "sha256:2be4450e6fbc52899f1a5919facb3a47ddd6694a2e485a406f85d6cc39629044", size = 270390 }
+sdist = { url = "https://files.pythonhosted.org/packages/81/68/ddcf5c12ba4f0823969d91c12fb23f285c10de3255c8a69a4524a99603ca/alibabacloud_dms-enterprise20181101-1.72.0.tar.gz", hash = "sha256:9f553387aa9920e031591cad40a6c7ffffbd247feaee31ce5f016d1ff1692a22", size = 271085 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ca/8f/27fa0df832350a92844e32ff515f9ca94b0ab17b96b0a98168de7b6899d3/alibabacloud_dms_enterprise20181101-1.71.0-py3-none-any.whl", hash = "sha256:9c0c164c6682997bd4d2bf5e11567ef8a9130f21555da38dd3da6a0ea0f47e57", size = 272122 },
+    { url = "https://files.pythonhosted.org/packages/d8/88/2c415211154a6aa8cb3e54d86582adeeb9dd7c08488fdd4cb9e34ceba9eb/alibabacloud_dms_enterprise20181101-1.72.0-py3-none-any.whl", hash = "sha256:b9f8db3d09708daf3371204036cb2dcd8e9d205b84324cd2d398559a105cfda9", size = 272733 },
 ]
 
 [[package]]
@@ -127,7 +127,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "alibabacloud-dms-enterprise20181101", specifier = ">=1.71.0" },
+    { name = "alibabacloud-dms-enterprise20181101", specifier = ">=1.72.0" },
     { name = "alibabacloud-tea-openapi", specifier = "==0.4.0rc3" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "mcp", extras = ["cli"], specifier = ">=1.6.0" },
