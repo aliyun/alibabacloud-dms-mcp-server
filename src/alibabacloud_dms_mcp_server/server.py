@@ -110,8 +110,9 @@ def create_client() -> dms_enterprise20181101Client:
 
 
 @mcp.tool(name="addInstance",
-          description="Add an instance to DMS. If the instance already exists, it will return the existing instance information.")
-async def addInstance(
+          description="Add an instance to DMS. If the instance already exists, it will return the existing instance information.",
+          annotations={"title": "添加或获取DMS实例", "readOnlyHint": False, "destructiveHint": False})
+async def add_instance(
         db_user: str = Field(description="The username used to connect to the database"),
         db_password: str = Field(description="The password used to connect to the database"),
         instance_resource_id: Optional[str] = Field(
@@ -156,8 +157,9 @@ async def addInstance(
 
 
 @mcp.tool(name="getInstance",
-          description="Retrieve detailed instance information from DMS.")
-async def getInstance(
+          description="Retrieve detailed instance information from DMS.",
+          annotations={"title": "获取DMS实例详情", "readOnlyHint": True})
+async def get_instance(
         host: str = Field(description="The hostname of the database instance"),
         port: str = Field(description="The connection port number"),
         sid: Optional[str] = Field(description="Required for Oracle like databases", default=None)
@@ -194,8 +196,9 @@ async def getInstance(
 @mcp.tool(name="searchDatabase",
           description="Search databases in DMS based on schemaName. This tool allows searching for database instances "
                       "in the DMS using a provided search key(schemaName). It supports pagination to handle large "
-                      "result sets efficiently.")
-async def searchDatabase(
+                      "result sets efficiently.",
+          annotations={"title": "搜索DMS数据库", "readOnlyHint": True})
+async def search_database(
         search_key: str = Field(description="Schema name to search for"),
         page_number: int = Field(description="The page number to retrieve (starting from 1)", default=1),
         page_size: int = Field(description="Number of results per page, up to a maximum of 1000", default=200)
@@ -239,8 +242,9 @@ async def searchDatabase(
 @mcp.tool(name="getDatabase",
           description="Retrieve detailed information about a specific database from DMS. This tool fetches metadata for a database instance in the DMS "
                       "based on connection parameters and schema name. Supports Oracle-specific SID specification. "
-                      "If you don't know host port, please use searchDatabase tool instead.")
-async def getDatabase(
+                      "If you don't know host port, please use searchDatabase tool instead.",
+          annotations={"title": "获取DMS数据库详情", "readOnlyHint": True})
+async def get_database(
         host: str = Field(description="Hostname or IP address of the database instance"),
         port: str = Field(description="Connection port number (valid range: 1-65535)"),
         schema_name: str = Field(description="Name of the database schema"),
@@ -277,8 +281,9 @@ async def getDatabase(
 
 @mcp.tool(name="listTable",
           description="Search for database tables in DMS based on databaseId and tableName. This tool allows searching for database tables in the DMS "
-                      "if databaseId is known. If you don't known databaseId, you could obtained via getDatabase tool.")
-async def listTables(
+                      "if databaseId is known. If you don't known databaseId, you could obtained via getDatabase tool.",
+          annotations={"title": "列出DMS表", "readOnlyHint": True})
+async def list_tables(
         database_id: str = Field(description="Required databaseId (obtained via getDatabase tool) to scope the search"),
         search_name: str = Field(
             description="A non-empty string used as the search keyword. Used to match table names"),
@@ -303,8 +308,9 @@ async def listTables(
 
 
 @mcp.tool(name="getTableDetailInfo",
-          description="Retrieve detailed metadata information about a specific database table including schema and index details.")
-async def getMetaTableDetailInfo(
+          description="Retrieve detailed metadata information about a specific database table including schema and index details.",
+          annotations={"title": "获取DMS表详细信息", "readOnlyHint": True})
+async def get_meta_table_detail_info(
         table_guid: str = Field(
             description="Unique table identifier(format: dmsTableId.schemaName.tableName). Obtained via searchTable or listTable tool")
 ) -> TableDetail:
@@ -330,8 +336,9 @@ async def getMetaTableDetailInfo(
 
 
 @mcp.tool(name="executeScript",
-          description="Execute SQL script against a database in DMS and return structured results.")
-async def executeScript(
+          description="Execute SQL script against a database in DMS and return structured results.",
+          annotations={"title": "在DMS中执行SQL脚本", "readOnlyHint": False, "destructiveHint": True})
+async def execute_script(
         database_id: str = Field(description="Required DMS databaseId. Obtained via getDatabase tool"),
         script: str = Field(description="SQL script to execute"),
         logic: bool = Field(description="Whether to use logical execution mode", default=False)
@@ -363,7 +370,8 @@ async def executeScript(
                       "questions and generate corresponding SQL statements for data retrieval.If you don't have the "
                       "database_id, use the searchDatabase tool first to identify the"
                       "correct database. The sql generated could be executed via DMS executeScript tool provided in "
-                      "this server if necessary.")
+                      "this server if necessary.",
+          annotations={"title": "自然语言转SQL (DMS)", "readOnlyHint": True})
 async def nl2sql(
         database_id: str = Field(description="DMS databaseId. If not provided, searchDatabase will be used first"),
         question: str = Field(
