@@ -66,20 +66,40 @@ class TableDetail(MyBaseModel):
 
 
 class ResultSet(MyBaseModel):
-    ColumnNames: Any = Field(description="Ordered list of column names")
-    RowCount: Any = Field(description="Number of rows returned")
-    Rows: Any = Field(description="List of rows with column name -> value mapping")
-    Success: Any = Field(description="Whether this result set was successfully retrieved")
+    ColumnNames: List[str] = Field(description="Ordered list of column names")
+    RowCount: int = Field(description="Number of rows returned")
+    Rows: List[Dict[str, Any]] = Field(description="List of rows, where each row is a dictionary of column_name: value")
+    MarkdownTable: Optional[str] = Field(default=None, description="Data formatted as a Markdown table string for "
+                                                                   "LLM-friendly consumption")
+    Success: bool = Field(description="Whether this result set was successfully retrieved")
 
 
 class ExecuteScriptResult(MyBaseModel):
-    RequestId: Any = Field(description="Unique request identifier")
-    Results: Any = Field(description="List of result sets from executed script")
-    Success: Any = Field(description="Overall operation success status")
+    RequestId: str = Field(description="Unique request identifier")
+    #
+    Results: List[ResultSet] = Field(description="List of result sets from executed script")
+    Success: bool = Field(description="Overall operation success status")
+
+    def __str__(self) -> str:
+        if self.Success and self.Results:
+            # Assuming there is only one result set, or the first one is the primary one for string representation
+            first_result = self.Results[0]
+            if first_result.Success and first_result.MarkdownTable:
+                return first_result.MarkdownTable
+            elif not first_result.Success:
+                # You might want to return a specific message if the first result set itself failed
+                return "The first result set was not successful."
+            else:
+                # Fallback if MarkdownTable is None but result was successful (should not happen with current logic)
+                return "Result data is not available in Markdown format."
+        elif not self.Success:
+            return "Script execution failed."
+        else:  # Success is True but Results is empty
+            return "Script executed successfully, but no results were returned."
 
 
 class SqlResult(MyBaseModel):
-    sql: Any = Field(description="The generated SQL query based on the natural language question")
+    sql: Optional[str] = Field(description="The generated SQL query based on the natural language question")
 
 
 mcp = FastMCP("dms-mcp-server")
@@ -110,7 +130,8 @@ def create_client() -> dms_enterprise20181101Client:
 
 
 @mcp.tool(name="addInstance",
-          description="Add an instance to DMS. If the instance already exists, it will return the existing instance information.",
+          description="Add an instance to DMS. If the instance already exists, it will return the existing instance "
+                      "information.",
           annotations={"title": "添加或获取DMS实例", "readOnlyHint": False, "destructiveHint": False})
 async def add_instance(
         db_user: str = Field(description="The username used to connect to the database"),
@@ -342,8 +363,23 @@ async def execute_script(
         database_id: str = Field(description="Required DMS databaseId. Obtained via getDatabase tool"),
         script: str = Field(description="SQL script to execute"),
         logic: bool = Field(description="Whether to use logical execution mode", default=False)
-) -> ExecuteScriptResult:
+) -> str:
     """Execute SQL script against a database in DMS and return structured results"""
+
+    def _format_as_markdown_table(column_names: List[str], rows: List[Dict[str, Any]]) -> str:
+        if not column_names or not rows:
+            return ""
+
+        header = "| " + " | ".join(column_names) + " |"
+        separator = "| " + " | ".join(["---"] * len(column_names)) + " |"
+        table_rows = [header, separator]
+
+        for row_data in rows:
+            row_values = [str(row_data.get(col, "")) for col in column_names]
+            table_rows.append("| " + " | ".join(row_values) + " |")
+
+        return "\n".join(table_rows)
+
     if not isinstance(script, str) or not script.strip():
         error_msg = "Script parameter must be a non-empty string"
         logging.error(error_msg)
@@ -356,9 +392,43 @@ async def execute_script(
         response = client.execute_script(execute_script_request)
         if response is None or not hasattr(response, 'body') or response.body is None:
             logging.warning("Empty or invalid response received from DMS service")
-            return []
+            return str(ExecuteScriptResult(RequestId="", Results=[],
+                                           Success=False))  # Return an empty or error-indicating result
+
         data = response.body.to_map()
-        return ExecuteScriptResult(**data)
+
+        # Process results to add MarkdownTable
+        processed_results = []
+        if data.get('Success') and data.get('Results'):
+            for res_item in data.get('Results', []):
+                if res_item.get('Success'):
+                    column_names = res_item.get('ColumnNames', [])
+                    rows = res_item.get('Rows', [])
+                    markdown_table = _format_as_markdown_table(column_names, rows)
+
+                    # Ensure all fields for ResultSet are present, providing defaults if necessary
+                    processed_results.append(ResultSet(
+                        ColumnNames=column_names,
+                        RowCount=res_item.get('RowCount', 0),
+                        Rows=rows,
+                        MarkdownTable=markdown_table,
+                        Success=True
+                    ))
+                else:
+                    # Handle unsuccessful individual result sets if needed, or just pass them through
+                    processed_results.append(ResultSet(
+                        ColumnNames=res_item.get('ColumnNames', []),
+                        RowCount=res_item.get('RowCount', 0),
+                        Rows=res_item.get('Rows', []),
+                        MarkdownTable=None,  # Or some error message
+                        Success=False
+                    ))
+
+        return str(ExecuteScriptResult(
+            RequestId=data.get('RequestId', ""),
+            Results=processed_results,
+            Success=data.get('Success', False)
+        ))
     except Exception as error:
         logging.error(error)
         raise error
