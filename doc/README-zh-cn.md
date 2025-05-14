@@ -11,7 +11,7 @@
 
 <img src="../images/architecture-0508.jpg" alt="Architecture" width="60%">
 
-[//]: # (<img src="https://dms-static.oss-cn-hangzhou.aliyuncs.com/mcp-readme/architecture-0508.jpg" alt="Ding" width="60%">)
+[//]: # (<img src="https://dms-static.oss-cn-hangzhou.aliyuncs.com/mcp-readme/architecture-0508.jpg" alt="Architecture" width="60%">)
 
 
 ---
@@ -173,7 +173,7 @@ git clone https://github.com/aliyun/alibabacloud-dms-mcp-server.git
 
 <img src="../images/ding-en.jpg" alt="DingTalk" width="40%">
 
-[//]: # (<img src="http://dms-static.oss-cn-hangzhou.aliyuncs.com/mcp-readme/ding-zh-cn.jpg" alt="Ding" width="60%">)
+[//]: # (<img src="http://dms-static.oss-cn-hangzhou.aliyuncs.com/mcp-readme/ding-zh-cn.jpg" alt="DingTalk" width="60%">)
 
 
 
