@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/aliyun-alibabacloud-dms-mcp-server-badge.png)](https://mseep.ai/app/aliyun-alibabacloud-dms-mcp-server)
+
 <!-- 顶部语言切换 -->
 
 <p align="center">English | <a href="/doc/README-zh-cn.md">中文</a><br></p>
