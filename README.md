@@ -5,6 +5,8 @@
 
 # AlibabaCloud DMS MCP Server
 
+[![smithery badge](https://smithery.ai/badge/@aliyun/alibabacloud-dms-mcp-server)](https://smithery.ai/server/@aliyun/alibabacloud-dms-mcp-server)
+
 **AI-powered unified data management gateway** that supports connection to over 30+ data sources, serving as a multi-cloud universal data MCP Server to address cross-source data secure access in one-stop solution.
 
 - Supports full Alibaba Cloud series: RDS, PolarDB, ADB series, Lindorm series, TableStore series, MaxCompute series.
@@ -124,6 +126,14 @@ Key features via MCP include:
 ---
 
 ## Getting Started
+### Installing via Smithery
+
+To install AlibabaCloud DMS Unified Data Gateway for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@aliyun/alibabacloud-dms-mcp-server):
+
+```bash
+npx -y @smithery/cli install @aliyun/alibabacloud-dms-mcp-server --client claude
+```
+
 ### Option 1: Run from Source Code
 #### Download the Code
 ```bash
