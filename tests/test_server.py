@@ -354,7 +354,7 @@ async def test_tool_registry_ask_database_exec_fails(mcp_app, mock_dms_client):
 
 @pytest.mark.asyncio
 async def test_lifespan_with_db_id(mcp_app):
-    with patch.dict(os.environ, {"DMS_DATABASE_ID": "env_db_id_123"}):
+    with patch.dict(os.environ, {"DATABASE_ID": "env_db_id_123"}):
         with patch('alibabacloud_dms_mcp_server.server.ToolRegistry.register_tools') as mock_register:
             async with lifespan(mcp_app):
                 assert hasattr(mcp_app.state, 'default_database_id')
@@ -365,8 +365,8 @@ async def test_lifespan_with_db_id(mcp_app):
 
 @pytest.mark.asyncio
 async def test_lifespan_without_db_id(mcp_app):
-    # Ensure DMS_DATABASE_ID is not set or is empty for this test
-    with patch.dict(os.environ, {"DMS_DATABASE_ID": ""}):  # or del os.environ["DMS_DATABASE_ID"] if it might exist
+    # Ensure DATABASE_ID is not set or is empty for this test
+    with patch.dict(os.environ, {"DATABASE_ID": ""}):  # or del os.environ["DATABASE_ID"] if it might exist
         with patch('alibabacloud_dms_mcp_server.server.ToolRegistry.register_tools') as mock_register:
             async with lifespan(mcp_app):
                 assert hasattr(mcp_app.state, 'default_database_id')
