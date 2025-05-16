@@ -471,8 +471,10 @@ async def lifespan(app: FastMCP) -> AsyncGenerator[None, None]:
                         logger.info(f"Instance {db_host}:{db_port} verified. InstanceId: {instance_details.InstanceId}")
 
                         if db_name_path or catalog_name:  # We need either a schema or a catalog to search
-                            search_term_for_db = catalog_name
+                            search_term_for_db = catalog_name if catalog_name else db_name_path
+                            sid_name = None
                             if catalog_name and db_name_path:
+                                sid_name = db_name_path
                                 logger.info(
                                     f"Searching for database with catalog '{catalog_name}' and schema '{db_name_path}' associated with instance {db_host}:{db_port}")
                             elif db_name_path:
@@ -483,7 +485,11 @@ async def lifespan(app: FastMCP) -> AsyncGenerator[None, None]:
                                     f"Searching for database catalog '{catalog_name}' associated with instance {db_host}:{db_port}")
 
                             database = await get_database(host=db_host,
-                                                          port=db_port, schema_name=search_term_for_db, sid=None)
+                                                          port=db_port, schema_name=search_term_for_db, sid=sid_name)
+                            if not database or database.DatabaseId is None:
+                                logger.warning(
+                                    f"No database found for {search_term_for_db} at {db_host}:{db_port} after processing CONNECTION_STRING.")
+                                database = await get_database(host=db_host, port=db_port, schema_name=search_term_for_db, sid=None)
                             found_db_id = None
                             if database:
                                 found_db_id = database.DatabaseId
