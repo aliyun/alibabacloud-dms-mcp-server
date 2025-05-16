@@ -16,6 +16,15 @@ dependencies = [
 license = "Apache-2.0"
 license-files = ["LICENSE"]
 
+[project.optional-dependencies]
+dev = [
+    "mypy>=1.15.0",
+    "pytest>=8.3.4",
+    "pytest-asyncio>=0.25.3",
+    "pytest-cov>=6.0.0",
+    "pytest-mock>=3.14.0",
+    "ruff>=0.9.9",
+]
 
 [project.scripts]
 alibabacloud-dms-mcp-server = "alibabacloud_dms_mcp_server.server:main"
