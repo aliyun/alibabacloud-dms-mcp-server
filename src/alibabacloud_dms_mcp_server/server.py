@@ -547,13 +547,3 @@ def run_server():
 if __name__ == "__main__":
     run_server()
 
-
-def run_server():
-    log_level_str = os.getenv("LOG_LEVEL", "INFO").upper()
-    logging.basicConfig(level=log_level_str, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    logger.info(f"Starting DMS MCP server with log level {log_level_str}")
-    mcp.run(transport=os.getenv('SERVER_TRANSPORT', 'stdio'))
-
-
-if __name__ == "__main__":
-    run_server()
