@@ -353,26 +353,87 @@ async def test_tool_registry_ask_database_exec_fails(mcp_app, mock_dms_client):
 # --- Tests for Lifespan ---
 
 @pytest.mark.asyncio
-async def test_lifespan_with_db_id(mcp_app):
-    with patch.dict(os.environ, {"DATABASE_ID": "env_db_id_123"}):
+async def test_lifespan_with_connection_string(mcp_app, mock_dms_client):
+    # 模拟 get_instance 的成功响应
+    instance_response = {
+        "Instance": {
+            "InstanceId": "rm-test123",
+            "State": "NORMAL",
+            "InstanceType": "MySQL"
+        }
+    }
+    mock_dms_client.get_instance.return_value = create_mock_openapi_response(instance_response)
+    
+    # 模拟 get_database 的成功响应，包含DatabaseId
+    db_response = {
+        "Database": {
+            "DatabaseId": "db-test-123",
+            "SchemaName": "test_db",
+            "DbType": "MySQL"
+        }
+    }
+    mock_dms_client.get_database.return_value = create_mock_openapi_response(db_response)
+    
+    # 使用 CONNECTION_STRING 替代原来的 DATABASE_ID
+    with patch.dict(os.environ, {"CONNECTION_STRING": "test_db@localhost:3306"}):
         with patch('alibabacloud_dms_mcp_server.server.ToolRegistry.register_tools') as mock_register:
             async with lifespan(mcp_app):
                 assert hasattr(mcp_app.state, 'default_database_id')
-                assert mcp_app.state.default_database_id == "env_db_id_123"
+                assert mcp_app.state.default_database_id == "db-test-123"
                 mock_register.assert_called_once()
-            assert not hasattr(mcp_app.state, 'default_database_id')  # Check cleanup
+            assert not hasattr(mcp_app.state, 'default_database_id')  # 检查清理
 
 
 @pytest.mark.asyncio
-async def test_lifespan_without_db_id(mcp_app):
-    # Ensure DATABASE_ID is not set or is empty for this test
-    with patch.dict(os.environ, {"DATABASE_ID": ""}):  # or del os.environ["DATABASE_ID"] if it might exist
+async def test_lifespan_without_connection_string(mcp_app):
+    # 确保环境变量为空
+    with patch.dict(os.environ, {"CONNECTION_STRING": ""}):
         with patch('alibabacloud_dms_mcp_server.server.ToolRegistry.register_tools') as mock_register:
             async with lifespan(mcp_app):
                 assert hasattr(mcp_app.state, 'default_database_id')
                 assert mcp_app.state.default_database_id is None
                 mock_register.assert_called_once()
             assert not hasattr(mcp_app.state, 'default_database_id')
+
+
+@pytest.mark.asyncio
+async def test_lifespan_with_pg_connection_string(mcp_app, mock_dms_client):
+    # 模拟 get_instance 的成功响应
+    instance_response = {
+        "Instance": {
+            "InstanceId": "pg-test123",
+            "State": "NORMAL",
+            "InstanceType": "PostgreSQL"
+        }
+    }
+    mock_dms_client.get_instance.return_value = create_mock_openapi_response(instance_response)
+    
+    # 模拟 get_database 的成功响应，包含DatabaseId
+    db_response = {
+        "Database": {
+            "DatabaseId": "pg-db-test-456",
+            "SchemaName": "pg_schema",
+            "DbType": "PostgreSQL"
+        }
+    }
+    mock_dms_client.get_database.return_value = create_mock_openapi_response(db_response)
+    
+    # 使用PostgreSQL格式的CONNECTION_STRING (catalog@host:port:schema)
+    with patch.dict(os.environ, {"CONNECTION_STRING": "test_db@localhost:5432:pg_schema"}):
+        with patch('alibabacloud_dms_mcp_server.server.ToolRegistry.register_tools') as mock_register:
+            async with lifespan(mcp_app):
+                assert hasattr(mcp_app.state, 'default_database_id')
+                assert mcp_app.state.default_database_id == "pg-db-test-456"
+                mock_register.assert_called_once()
+                
+                # 验证调用get_database时使用了正确的参数
+                call_args = mock_dms_client.get_database.call_args[0][0]
+                assert call_args.host == "localhost"
+                assert call_args.port == "5432"
+                assert call_args.schema_name == "test_db" # catalog名称用作search_key
+                assert call_args.sid == "pg_schema"  # schema名称作为sid参数传递
+            
+            assert not hasattr(mcp_app.state, 'default_database_id')  # 检查清理
 
 
 # --- Test ExecuteScriptResult __str__ ---

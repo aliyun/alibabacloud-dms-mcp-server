@@ -15,17 +15,18 @@ from alibabacloud_dms_enterprise20181101 import models as dms_enterprise_2018110
 # --- Global Logger ---
 logger = logging.getLogger(__name__)
 
-
 # --- Pydantic Models ---
 class MyBaseModel(BaseModel):
     model_config = ConfigDict(json_dumps_params={'ensure_ascii': False})
 
+class AskDatabaseResult(MyBaseModel):
+    executed_sql: str = Field(description="The SQL query that was executed.")
+    execution_result: str = Field(description="The result of the SQL query execution.")
 
 class InstanceInfo(MyBaseModel):
     instance_id: Any = Field(description="Unique instance identifier in DMS", default=None)
     host: Any = Field(description="The hostname of the database instance", default=None)
     port: Any = Field(description="The connection port number", default=None)
-
 
 class InstanceDetail(MyBaseModel):
     InstanceId: Any = Field(description="Unique instance identifier in DMS", default=None)
@@ -33,14 +34,12 @@ class InstanceDetail(MyBaseModel):
     InstanceType: Any = Field(description="Database Engine type", default=None)
     InstanceAlias: Any = Field(description="Instance alias in DMS", default=None)
 
-
 class DatabaseInfo(MyBaseModel):
     DatabaseId: Any = Field(description="Unique database identifier in DMS")
     Host: Any = Field(description="Hostname or IP address of the database instance")
     Port: Any = Field(description="Connection port number")
     DbType: Any = Field(description="Database Engine type")
     SchemaName: Any = Field(description="Name of the database schema")
-
 
 class DatabaseDetail(MyBaseModel):
     DatabaseId: Any = Field(description="Unique database identifier in DMS", default=None)
@@ -50,7 +49,6 @@ class DatabaseDetail(MyBaseModel):
     InstanceId: Any = Field(description="Instance identifier in DMS", default=None)
     State: Any = Field(description="Current operational status", default=None)
 
-
 class Column(MyBaseModel):
     ColumnName: Any = Field(description="Name of the column")
     ColumnType: Any = Field(description="Full SQL type declaration (e.g., 'varchar(32)', 'bigint(20)')")
@@ -58,18 +56,15 @@ class Column(MyBaseModel):
     Description: Any = Field(description="Column comment/description text")
     Nullable: Any = Field(description="Whether NULL values are allowed")
 
-
 class Index(MyBaseModel):
     IndexColumns: Any = Field(description="List of column names included in the index")
     IndexName: Any = Field(description="Name of the index")
     IndexType: Any = Field(description="Type of index ('Primary', 'Unique', etc.)")
     Unique: Any = Field(description="Whether the index enforces uniqueness")
 
-
 class TableDetail(MyBaseModel):
     ColumnList: Any = Field(description="List of column metadata", default=None)
     IndexList: Any = Field(description="List of index metadata", default=None)
-
 
 class ResultSet(MyBaseModel):
     ColumnNames: List[str] = Field(description="Ordered list of column names")
@@ -77,7 +72,6 @@ class ResultSet(MyBaseModel):
     Rows: List[Dict[str, Any]] = Field(description="List of rows, where each row is a dictionary of column_name: value")
     MarkdownTable: Optional[str] = Field(default=None, description="Data formatted as a Markdown table string")
     Success: bool = Field(description="Whether this result set was successfully retrieved")
-
 
 class ExecuteScriptResult(MyBaseModel):
     RequestId: str = Field(description="Unique request identifier")
@@ -98,22 +92,20 @@ class ExecuteScriptResult(MyBaseModel):
         else:
             return "Script executed successfully, but no results were returned."
 
-
 class SqlResult(MyBaseModel):
     sql: Optional[str] = Field(description="The generated SQL query")
-
 
 # --- Aliyun Client Creation ---
 def create_client() -> dms_enterprise20181101Client:
     config = open_api_models.Config(
         access_key_id=os.getenv('ALIBABA_CLOUD_ACCESS_KEY_ID', ""),
         access_key_secret=os.getenv('ALIBABA_CLOUD_ACCESS_KEY_SECRET', ""),
-        security_token=os.getenv('ALIBABA_CLOUD_SECURITY_TOKEN')
+        security_token=os.getenv('ALIBABA_CLOUD_SECURITY_TOKEN'),
+        read_timeout=60*1000  # 设置读取超时时间为60秒
     )
     config.endpoint = f'dms-enterprise.cn-hangzhou.aliyuncs.com'
     config.user_agent = "dms-mcp"
     return dms_enterprise20181101Client(config)
-
 
 async def add_instance(
         db_user: str = Field(description="The username used to connect to the database"),
@@ -140,7 +132,6 @@ async def add_instance(
         logger.error(f"Error in add_instance: {e}")
         raise
 
-
 async def get_instance(
         host: str = Field(description="The hostname of the database instance"),
         port: str = Field(description="The connection port number"),
@@ -156,7 +147,6 @@ async def get_instance(
     except Exception as e:
         logger.error(f"Error in get_instance: {e}")
         raise
-
 
 async def search_database(
         search_key: str = Field(description="database name to search for"),
@@ -182,7 +172,6 @@ async def search_database(
         logger.error(f"Error in search_database: {e}")
         raise
 
-
 async def get_database(
         host: str = Field(description="Hostname or IP of the database instance"),
         port: str = Field(description="Connection port number"),
@@ -199,7 +188,6 @@ async def get_database(
     except Exception as e:
         logger.error(f"Error in get_database: {e}")
         raise
-
 
 async def list_tables(  # Renamed from listTable to follow convention
         database_id: str = Field(description="DMS databaseId"),
@@ -218,7 +206,6 @@ async def list_tables(  # Renamed from listTable to follow convention
         logger.error(f"Error in list_tables: {e}")
         raise
 
-
 async def get_meta_table_detail_info(
         table_guid: str = Field(description="Unique table identifier (format: dmsTableId.schemaName.tableName)")
 ) -> TableDetail:
@@ -232,7 +219,6 @@ async def get_meta_table_detail_info(
         logger.error(f"Error in get_meta_table_detail_info: {e}")
         raise
 
-
 def _format_as_markdown_table(column_names: List[str], rows: List[Dict[str, Any]]) -> str:
     if not column_names or not rows: return ""
     header = "| " + " | ".join(column_names) + " |"
@@ -242,7 +228,6 @@ def _format_as_markdown_table(column_names: List[str], rows: List[Dict[str, Any]
         row_values = [str(row_data.get(col, "")) for col in column_names]
         table_rows_str.append("| " + " | ".join(row_values) + " |")
     return "\n".join(table_rows_str)
-
 
 async def execute_script(
         database_id: str = Field(description="DMS databaseId"),
@@ -275,7 +260,6 @@ async def execute_script(
         logger.error(f"Error in execute_script: {e}")
         raise
 
-
 async def nl2sql(
         database_id: str = Field(description="DMS databaseId"),
         question: str = Field(description="Natural language question"),
@@ -293,7 +277,6 @@ async def nl2sql(
     except Exception as e:
         logger.error(f"Error in nl2sql_explicit_db: {e}")
         raise
-
 
 # --- ToolRegistry Class ---
 class ToolRegistry:
@@ -346,22 +329,25 @@ class ToolRegistry:
                     description="Your question in natural language about the pre-configured database."),
                 knowledge: Optional[str] = Field(default=None,
                                                  description="Optional: Additional context to help formulate the SQL query.")
-        ) -> str:
+        ) -> AskDatabaseResult:
             sql_result_obj = await nl2sql(database_id=self.default_database_id, question=question,
                                           knowledge=knowledge)
+            generated_sql = ""
             if not sql_result_obj or not sql_result_obj.sql:
                 logger.warning(f"Failed to generate SQL for question: {question} on preconfigured DB.")
-                return "Error: Could not generate an SQL query from your question."
+                return AskDatabaseResult(executed_sql=generated_sql,
+                                         execution_result="Error: Could not generate an SQL query from your question.")
 
             generated_sql = sql_result_obj.sql
             logger.info(f"Generated SQL for pre-configured DB: {generated_sql}")
             try:
                 execution_result_obj = await execute_script(database_id=self.default_database_id, script=generated_sql,
                                                             logic=False)
-                return str(execution_result_obj)
+                return AskDatabaseResult(executed_sql=generated_sql, execution_result=str(execution_result_obj))
             except Exception as e:
                 logger.error(f"Error executing SQL for pre-configured DB: {e}")
-                return f"Error: An issue occurred while executing the query: {str(e)}"
+                return AskDatabaseResult(executed_sql=generated_sql,
+                                         execution_result=f"Error: An issue occurred while executing the query: {str(e)}")
 
     def _register_full_toolset(self):
         self.mcp.tool(name="addInstance",
@@ -396,7 +382,6 @@ class ToolRegistry:
 
         self.mcp.tool(name="generateSql", description="Generate SELECT-type SQL queries from natural language input.",
                       annotations={"title": "自然语言转SQL (DMS)", "readOnlyHint": True})(nl2sql)
-
 
 # --- Lifespan Function ---
 @asynccontextmanager
@@ -532,7 +517,6 @@ async def lifespan(app: FastMCP) -> AsyncGenerator[None, None]:
     if hasattr(app.state, 'default_database_id'):
         delattr(app.state, 'default_database_id')
 
-
 # --- FastMCP Instance Creation & Server Run ---
 mcp = FastMCP(
     "DatabaseManagementAssistant",
@@ -542,14 +526,11 @@ mcp = FastMCP(
                  "interacting with databases."
 )
 
-
 def run_server():
     log_level_str = os.getenv("LOG_LEVEL", "INFO").upper()
     logging.basicConfig(level=log_level_str, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     logger.info(f"Starting DMS MCP server with log level {log_level_str}")
     mcp.run(transport=os.getenv('SERVER_TRANSPORT', 'stdio'))
 
-
 if __name__ == "__main__":
     run_server()
-
