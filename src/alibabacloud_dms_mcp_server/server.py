@@ -1,25 +1,32 @@
-from pydantic import Field, BaseModel, ConfigDict
+import os
+import logging
+from contextlib import asynccontextmanager
+from collections.abc import AsyncGenerator
 from typing import Dict, Any, Optional, List, Union
+from urllib.parse import urlparse
+
+from pydantic import Field, BaseModel, ConfigDict
+from mcp.server.fastmcp import FastMCP
+
 from alibabacloud_dms_enterprise20181101.client import Client as dms_enterprise20181101Client
 from alibabacloud_tea_openapi import models as open_api_models
 from alibabacloud_dms_enterprise20181101 import models as dms_enterprise_20181101_models
-from mcp.server import FastMCP
-import os
-import logging
 
+# --- Global Logger ---
+logger = logging.getLogger(__name__)
 
-# 定义共享配置的Pydantic基础模型
+# --- Pydantic Models ---
 class MyBaseModel(BaseModel):
-    # 在 Pydantic 模型转换为 JSON 时，保留非 ASCII 字符（如中文、emoji）
     model_config = ConfigDict(json_dumps_params={'ensure_ascii': False})
 
+class AskDatabaseResult(MyBaseModel):
+    executed_sql: str = Field(description="The SQL query that was executed.")
+    execution_result: str = Field(description="The result of the SQL query execution.")
 
-# 定义Pydantic模型
 class InstanceInfo(MyBaseModel):
     instance_id: Any = Field(description="Unique instance identifier in DMS", default=None)
     host: Any = Field(description="The hostname of the database instance", default=None)
     port: Any = Field(description="The connection port number", default=None)
-
 
 class InstanceDetail(MyBaseModel):
     InstanceId: Any = Field(description="Unique instance identifier in DMS", default=None)
@@ -27,14 +34,12 @@ class InstanceDetail(MyBaseModel):
     InstanceType: Any = Field(description="Database Engine type", default=None)
     InstanceAlias: Any = Field(description="Instance alias in DMS", default=None)
 
-
 class DatabaseInfo(MyBaseModel):
     DatabaseId: Any = Field(description="Unique database identifier in DMS")
     Host: Any = Field(description="Hostname or IP address of the database instance")
     Port: Any = Field(description="Connection port number")
     DbType: Any = Field(description="Database Engine type")
     SchemaName: Any = Field(description="Name of the database schema")
-
 
 class DatabaseDetail(MyBaseModel):
     DatabaseId: Any = Field(description="Unique database identifier in DMS", default=None)
@@ -44,7 +49,6 @@ class DatabaseDetail(MyBaseModel):
     InstanceId: Any = Field(description="Instance identifier in DMS", default=None)
     State: Any = Field(description="Current operational status", default=None)
 
-
 class Column(MyBaseModel):
     ColumnName: Any = Field(description="Name of the column")
     ColumnType: Any = Field(description="Full SQL type declaration (e.g., 'varchar(32)', 'bigint(20)')")
@@ -52,432 +56,481 @@ class Column(MyBaseModel):
     Description: Any = Field(description="Column comment/description text")
     Nullable: Any = Field(description="Whether NULL values are allowed")
 
-
 class Index(MyBaseModel):
     IndexColumns: Any = Field(description="List of column names included in the index")
     IndexName: Any = Field(description="Name of the index")
     IndexType: Any = Field(description="Type of index ('Primary', 'Unique', etc.)")
     Unique: Any = Field(description="Whether the index enforces uniqueness")
 
-
 class TableDetail(MyBaseModel):
     ColumnList: Any = Field(description="List of column metadata", default=None)
     IndexList: Any = Field(description="List of index metadata", default=None)
-
 
 class ResultSet(MyBaseModel):
     ColumnNames: List[str] = Field(description="Ordered list of column names")
     RowCount: int = Field(description="Number of rows returned")
     Rows: List[Dict[str, Any]] = Field(description="List of rows, where each row is a dictionary of column_name: value")
-    MarkdownTable: Optional[str] = Field(default=None, description="Data formatted as a Markdown table string for "
-                                                                   "LLM-friendly consumption")
+    MarkdownTable: Optional[str] = Field(default=None, description="Data formatted as a Markdown table string")
     Success: bool = Field(description="Whether this result set was successfully retrieved")
-
 
 class ExecuteScriptResult(MyBaseModel):
     RequestId: str = Field(description="Unique request identifier")
-    #
     Results: List[ResultSet] = Field(description="List of result sets from executed script")
     Success: bool = Field(description="Overall operation success status")
 
     def __str__(self) -> str:
         if self.Success and self.Results:
-            # Assuming there is only one result set, or the first one is the primary one for string representation
             first_result = self.Results[0]
             if first_result.Success and first_result.MarkdownTable:
                 return first_result.MarkdownTable
             elif not first_result.Success:
-                # You might want to return a specific message if the first result set itself failed
                 return "The first result set was not successful."
             else:
-                # Fallback if MarkdownTable is None but result was successful (should not happen with current logic)
                 return "Result data is not available in Markdown format."
         elif not self.Success:
             return "Script execution failed."
-        else:  # Success is True but Results is empty
+        else:
             return "Script executed successfully, but no results were returned."
 
-
 class SqlResult(MyBaseModel):
-    sql: Optional[str] = Field(description="The generated SQL query based on the natural language question")
+    sql: Optional[str] = Field(description="The generated SQL query")
 
-
-mcp = FastMCP("dms-mcp-server")
-
-
+# --- Aliyun Client Creation ---
 def create_client() -> dms_enterprise20181101Client:
-    """
-    初始化阿里云 DMS 账号Client
-    
-    使用环境变量中的访问凭证创建一个DMS服务的客户端实例。
-    支持通过AK/SK或STS方式进行认证。
-    
-    Returns:
-        dms_enterprise20181101Client: 已配置的DMS客户端实例
-        
-    Raises:
-        Exception: 如果客户端初始化失败
-    """
     config = open_api_models.Config(
         access_key_id=os.getenv('ALIBABA_CLOUD_ACCESS_KEY_ID', ""),
         access_key_secret=os.getenv('ALIBABA_CLOUD_ACCESS_KEY_SECRET', ""),
-        security_token=os.getenv('ALIBABA_CLOUD_SECURITY_TOKEN')
+        security_token=os.getenv('ALIBABA_CLOUD_SECURITY_TOKEN'),
+        read_timeout=60*1000  # 设置读取超时时间为60秒
     )
-    config.endpoint = f'dms-enterprise.cn-beijing.aliyuncs.com'
+    config.endpoint = f'dms-enterprise.cn-hangzhou.aliyuncs.com'
     config.user_agent = "dms-mcp"
-
     return dms_enterprise20181101Client(config)
 
-
-@mcp.tool(name="addInstance",
-          description="Add an instance to DMS. If the instance already exists, it will return the existing instance "
-                      "information.",
-          annotations={"title": "添加或获取DMS实例", "readOnlyHint": False, "destructiveHint": False})
 async def add_instance(
         db_user: str = Field(description="The username used to connect to the database"),
         db_password: str = Field(description="The password used to connect to the database"),
-        instance_resource_id: Optional[str] = Field(
-            description="The resource id of the instance, typically assigned by the cloud provider", default=None),
-        host: Optional[str] = Field(description="The hostname of the database instance", default=None),
-        port: Optional[str] = Field(description="The connection port number", default=None),
-        region: Optional[str] = Field(description="The region where the instance is located (e.g., 'cn-hangzhou')",
-                                      default=None)
+        instance_resource_id: Optional[str] = Field(default=None, description="The resource id of the instance"),
+        host: Optional[str] = Field(default=None, description="The hostname of the database instance"),
+        port: Optional[str] = Field(default=None, description="The connection port number"),
+        region: Optional[str] = Field(default=None, description="The region (e.g., 'cn-hangzhou')")
 ) -> InstanceInfo:
-    """Add an instance to DMS or get existing instance information"""
     if not db_user or not isinstance(db_user, str):
-        logging.error("Invalid db_user parameter: %s", db_user)
-        return "db_user must be a non-empty string"
-
+        raise ValueError("db_user must be a non-empty string")
     if not db_password or not isinstance(db_password, str):
-        logging.error("Invalid db_password parameter: %s", db_password)
-        return "db_password must be a non-empty string"
-
+        raise ValueError("db_password must be a non-empty string")
     client = create_client()
-    add_instance_request = dms_enterprise_20181101_models.SimplyAddInstanceRequest(
-        database_user=db_user,
-        database_password=db_password)
-
-    if host:
-        add_instance_request.host = host
-    if port:
-        add_instance_request.port = port
-    if instance_resource_id:
-        add_instance_request.instance_id = instance_resource_id
-    if region:
-        add_instance_request.region = region
+    req = dms_enterprise_20181101_models.SimplyAddInstanceRequest(database_user=db_user, database_password=db_password)
+    if host: req.host = host
+    if port: req.port = port
+    if instance_resource_id: req.instance_id = instance_resource_id
+    if region: req.region = region
     try:
-        response = client.simply_add_instance(add_instance_request)
-        if not response or not response.body:
-            logging.warning("Empty response received from DMS service")
-            return {}
-        data = response.body.to_map()
-        return InstanceInfo(**data)
-    except Exception as error:
-        logging.error(error)
-        raise error
+        resp = client.simply_add_instance(req)
+        return InstanceInfo(**resp.body.to_map()) if resp and resp.body else InstanceInfo()
+    except Exception as e:
+        logger.error(f"Error in add_instance: {e}")
+        raise
 
-
-@mcp.tool(name="getInstance",
-          description="Retrieve detailed instance information from DMS.",
-          annotations={"title": "获取DMS实例详情", "readOnlyHint": True})
 async def get_instance(
         host: str = Field(description="The hostname of the database instance"),
         port: str = Field(description="The connection port number"),
-        sid: Optional[str] = Field(description="Required for Oracle like databases", default=None)
+        sid: Optional[str] = Field(default=None, description="Required for Oracle like databases")
 ) -> InstanceDetail:
-    """Retrieve detailed instance information from DMS"""
-    if not host or not isinstance(host, str):
-        logging.error("Invalid host parameter: %s", host)
-        return "Host must be a non-empty string"
-
-    if sid is not None and not isinstance(sid, str):
-        logging.error("Invalid sid parameter: %s", sid)
-        return "Sid must be a string or None"
-
     client = create_client()
-    get_instance_request = dms_enterprise_20181101_models.GetInstanceRequest(
-        host=host,
-        port=port)
-
-    if sid:
-        get_instance_request.sid = sid
+    req = dms_enterprise_20181101_models.GetInstanceRequest(host=host, port=port)
+    if sid: req.sid = sid
     try:
-        response = client.get_instance(get_instance_request)
-        if not response or not response.body:
-            logging.warning("Empty response received from DMS service")
-            return {}
-        data = response.body.to_map()
-        instance = data.get('Instance', {})
-        return InstanceDetail(**instance)
-    except Exception as error:
-        logging.error(error)
-        raise error
+        resp = client.get_instance(req)
+        instance_data = resp.body.to_map().get('Instance', {}) if resp and resp.body else {}
+        return InstanceDetail(**instance_data)
+    except Exception as e:
+        logger.error(f"Error in get_instance: {e}")
+        raise
 
-
-@mcp.tool(name="searchDatabase",
-          description="Search databases in DMS based on schemaName. This tool allows searching for database instances "
-                      "in the DMS using a provided search key(schemaName). It supports pagination to handle large "
-                      "result sets efficiently.",
-          annotations={"title": "搜索DMS数据库", "readOnlyHint": True})
 async def search_database(
-        search_key: str = Field(description="Schema name to search for"),
-        page_number: int = Field(description="The page number to retrieve (starting from 1)", default=1),
-        page_size: int = Field(description="Number of results per page, up to a maximum of 1000", default=200)
+        search_key: str = Field(description="database name to search for"),
+        page_number: int = Field(default=1, description="Page number (starting from 1)"),
+        page_size: int = Field(default=200, description="Results per page (max 1000)")
 ) -> List[DatabaseInfo]:
-    """Search databases in DMS based on schema name"""
-    if not search_key:
-        logging.error("Invalid searchKey parameter: %s", search_key)
-        return "searchKey must be a non-empty string"
-
     client = create_client()
-    search_database_request = dms_enterprise_20181101_models.SearchDatabaseRequest(
-        search_key=search_key, page_number=page_number, page_size=page_size)
-
+    req = dms_enterprise_20181101_models.SearchDatabaseRequest(search_key=search_key, page_number=page_number,
+                                                               page_size=page_size)
     try:
-        response = client.search_database(search_database_request)
-        if not response or not response.body:
-            logging.warning("Empty response received from DMS service")
-            return []
-        data = response.body.to_map()
-        search_db_list = data.get('SearchDatabaseList', {})
-        db_list = search_db_list.get('SearchDatabase', [])
-        result_list = []
-        for db in db_list:
-            db_info = {
-                "DatabaseId": db.get("DatabaseId", ""),
-                "Host": db.get("Host", ""),
-                "Port": db.get("Port", ""),
-                "DbType": db.get("DbType", ""),
-            }
-            if db.get("CatalogName") != 'def':
-                db_info["SchemaName"] = f'{db.get("CatalogName", "")}.{db.get("SchemaName", "")}'
-            else:
-                db_info["SchemaName"] = db.get("SchemaName", "")
-            result_list.append(DatabaseInfo(**db_info))
-        return result_list
-    except Exception as error:
-        logging.error(error)
-        raise error
+        resp = client.search_database(req)
+        if not resp or not resp.body: return []
+        db_list_data = resp.body.to_map().get('SearchDatabaseList', {}).get('SearchDatabase', [])
+        result = []
+        for db in db_list_data:
+            db_info_map = {"DatabaseId": db.get("DatabaseId"), "Host": db.get("Host"), "Port": db.get("Port"),
+                           "DbType": db.get("DbType")}
+            db_info_map["SchemaName"] = f'{db.get("CatalogName", "")}.{db.get("SchemaName", "")}' if db.get(
+                "CatalogName") != 'def' else db.get("SchemaName", "")
+            result.append(DatabaseInfo(**db_info_map))
+        return result
+    except Exception as e:
+        logger.error(f"Error in search_database: {e}")
+        raise
 
-
-@mcp.tool(name="getDatabase",
-          description="Retrieve detailed information about a specific database from DMS. This tool fetches metadata for a database instance in the DMS "
-                      "based on connection parameters and schema name. Supports Oracle-specific SID specification. "
-                      "If you don't know host port, please use searchDatabase tool instead.",
-          annotations={"title": "获取DMS数据库详情", "readOnlyHint": True})
 async def get_database(
-        host: str = Field(description="Hostname or IP address of the database instance"),
-        port: str = Field(description="Connection port number (valid range: 1-65535)"),
+        host: str = Field(description="Hostname or IP of the database instance"),
+        port: str = Field(description="Connection port number"),
         schema_name: str = Field(description="Name of the database schema"),
-        sid: Optional[str] = Field(description="Required for Oracle like databases", default=None)
+        sid: Optional[str] = Field(default=None, description="Required for Oracle like databases")
 ) -> DatabaseDetail:
-    """Retrieve detailed information about a specific database from DMS"""
-    if not isinstance(host, str) or not host.strip():
-        logging.error("Invalid host parameter: %s", host)
-        raise ValueError("Host must be a non-empty string")
-
-    if not isinstance(schema_name, str) or not schema_name.strip():
-        logging.error("Invalid schema_name parameter: %s", schema_name)
-        raise ValueError("Schema name must be a non-empty string")
-
     client = create_client()
-    get_database_request = dms_enterprise_20181101_models.GetDatabaseRequest(
-        host=host,
-        port=port,
-        schema_name=schema_name)
-    if sid:
-        get_database_request.sid = sid
+    req = dms_enterprise_20181101_models.GetDatabaseRequest(host=host, port=port, schema_name=schema_name)
+    if sid: req.sid = sid
     try:
-        response = client.get_database(get_database_request)
-        if not response or not response.body:
-            logging.warning("Empty response received from DMS service")
-            return []
-        data = response.body.to_map()
-        database = data.get('Database', {})
-        return DatabaseDetail(**database)
-    except Exception as error:
-        logging.error(error)
-        raise error
+        resp = client.get_database(req)
+        db_data = resp.body.to_map().get('Database', {}) if resp and resp.body else {}
+        return DatabaseDetail(**db_data)
+    except Exception as e:
+        logger.error(f"Error in get_database: {e}")
+        raise
 
-
-@mcp.tool(name="listTable",
-          description="Search for database tables in DMS based on databaseId and tableName. This tool allows searching for database tables in the DMS "
-                      "if databaseId is known. If you don't known databaseId, you could obtained via getDatabase tool.",
-          annotations={"title": "列出DMS表", "readOnlyHint": True})
-async def list_tables(
-        database_id: str = Field(description="Required databaseId (obtained via getDatabase tool) to scope the search"),
-        search_name: str = Field(
-            description="A non-empty string used as the search keyword. Used to match table names"),
-        page_number: int = Field(description="Pagination page number", default=1),
-        page_size: int = Field(description="Number of results per page (default: 200, max: 200)", default=200)
+async def list_tables(  # Renamed from listTable to follow convention
+        database_id: str = Field(description="DMS databaseId"),
+        search_name: str = Field(description="Search keyword for table names"),
+        page_number: int = Field(default=1, description="Pagination page number"),
+        page_size: int = Field(default=200, description="Results per page (max 200)")
 ) -> Dict[str, Any]:
-    """Search for database tables in DMS if databaseId is known"""
     client = create_client()
-    list_table_request = dms_enterprise_20181101_models.ListTablesRequest(
-        search_name=search_name, database_id=database_id, page_number=page_number, page_size=page_size,
-        return_guid=True)
+    req = dms_enterprise_20181101_models.ListTablesRequest(database_id=database_id, search_name=search_name,
+                                                           page_number=page_number, page_size=page_size,
+                                                           return_guid=True)
     try:
-        response = client.list_tables(list_table_request)
-        if response is None or not hasattr(response, 'body') or response.body is None:
-            logging.warning("Empty or invalid response received from DMS service")
-            return []
-        data = response.body.to_map()
-        return data
-    except Exception as error:
-        logging.error(error)
-        raise error
+        resp = client.list_tables(req)
+        return resp.body.to_map() if resp and resp.body else {}
+    except Exception as e:
+        logger.error(f"Error in list_tables: {e}")
+        raise
 
-
-@mcp.tool(name="getTableDetailInfo",
-          description="Retrieve detailed metadata information about a specific database table including schema and index details.",
-          annotations={"title": "获取DMS表详细信息", "readOnlyHint": True})
 async def get_meta_table_detail_info(
-        table_guid: str = Field(
-            description="Unique table identifier(format: dmsTableId.schemaName.tableName). Obtained via searchTable or listTable tool")
+        table_guid: str = Field(description="Unique table identifier (format: dmsTableId.schemaName.tableName)")
 ) -> TableDetail:
-    """Retrieve detailed metadata information about a specific database table"""
-    if not isinstance(table_guid, str) or not table_guid.strip():
-        logging.error("Invalid tableGuid parameter: %s", table_guid)
-        raise ValueError("tableGuid must be a non-empty string")
-
     client = create_client()
-    get_table_request = dms_enterprise_20181101_models.GetMetaTableDetailInfoRequest(
-        table_guid=table_guid)
+    req = dms_enterprise_20181101_models.GetMetaTableDetailInfoRequest(table_guid=table_guid)
     try:
-        response = client.get_meta_table_detail_info(get_table_request)
-        if response is None or not hasattr(response, 'body') or response.body is None:
-            logging.warning("Empty or invalid response received from DMS service")
-            return []
-        data = response.body.to_map()
-        detail_info = data.get('DetailInfo', {})
+        resp = client.get_meta_table_detail_info(req)
+        detail_info = resp.body.to_map().get('DetailInfo', {}) if resp and resp.body else {}
         return TableDetail(**detail_info)
-    except Exception as error:
-        logging.error(error)
-        raise error
+    except Exception as e:
+        logger.error(f"Error in get_meta_table_detail_info: {e}")
+        raise
 
+def _format_as_markdown_table(column_names: List[str], rows: List[Dict[str, Any]]) -> str:
+    if not column_names or not rows: return ""
+    header = "| " + " | ".join(column_names) + " |"
+    separator = "| " + " | ".join(["---"] * len(column_names)) + " |"
+    table_rows_str = [header, separator]
+    for row_data in rows:
+        row_values = [str(row_data.get(col, "")) for col in column_names]
+        table_rows_str.append("| " + " | ".join(row_values) + " |")
+    return "\n".join(table_rows_str)
 
-@mcp.tool(name="executeScript",
-          description="Execute SQL script against a database in DMS and return structured results.",
-          annotations={"title": "在DMS中执行SQL脚本", "readOnlyHint": False, "destructiveHint": True})
 async def execute_script(
-        database_id: str = Field(description="Required DMS databaseId. Obtained via getDatabase tool"),
+        database_id: str = Field(description="DMS databaseId"),
         script: str = Field(description="SQL script to execute"),
-        logic: bool = Field(description="Whether to use logical execution mode", default=False)
-) -> str:
-    """Execute SQL script against a database in DMS and return structured results"""
-
-    def _format_as_markdown_table(column_names: List[str], rows: List[Dict[str, Any]]) -> str:
-        if not column_names or not rows:
-            return ""
-
-        header = "| " + " | ".join(column_names) + " |"
-        separator = "| " + " | ".join(["---"] * len(column_names)) + " |"
-        table_rows = [header, separator]
-
-        for row_data in rows:
-            row_values = [str(row_data.get(col, "")) for col in column_names]
-            table_rows.append("| " + " | ".join(row_values) + " |")
-
-        return "\n".join(table_rows)
-
-    if not isinstance(script, str) or not script.strip():
-        error_msg = "Script parameter must be a non-empty string"
-        logging.error(error_msg)
-        raise ValueError(error_msg)
-
+        logic: bool = Field(default=False, description="Whether to use logical execution mode")
+) -> ExecuteScriptResult:  # Return the object, __str__ will be used by wrapper if needed
     client = create_client()
-    execute_script_request = dms_enterprise_20181101_models.ExecuteScriptRequest(
-        db_id=database_id, script=script, logic=logic)
+    req = dms_enterprise_20181101_models.ExecuteScriptRequest(db_id=database_id, script=script, logic=logic)
     try:
-        response = client.execute_script(execute_script_request)
-        if response is None or not hasattr(response, 'body') or response.body is None:
-            logging.warning("Empty or invalid response received from DMS service")
-            return str(ExecuteScriptResult(RequestId="", Results=[],
-                                           Success=False))  # Return an empty or error-indicating result
-
-        data = response.body.to_map()
-
-        # Process results to add MarkdownTable
+        resp = client.execute_script(req)
+        if not resp or not resp.body:
+            return ExecuteScriptResult(RequestId="", Results=[], Success=False)
+        data = resp.body.to_map()
         processed_results = []
         if data.get('Success') and data.get('Results'):
             for res_item in data.get('Results', []):
                 if res_item.get('Success'):
                     column_names = res_item.get('ColumnNames', [])
-                    rows = res_item.get('Rows', [])
-                    markdown_table = _format_as_markdown_table(column_names, rows)
-
-                    # Ensure all fields for ResultSet are present, providing defaults if necessary
-                    processed_results.append(ResultSet(
-                        ColumnNames=column_names,
-                        RowCount=res_item.get('RowCount', 0),
-                        Rows=rows,
-                        MarkdownTable=markdown_table,
-                        Success=True
-                    ))
+                    rows_data = res_item.get('Rows', [])
+                    markdown_table = _format_as_markdown_table(column_names, rows_data)
+                    processed_results.append(
+                        ResultSet(ColumnNames=column_names, RowCount=res_item.get('RowCount', 0), Rows=rows_data,
+                                  MarkdownTable=markdown_table, Success=True))
                 else:
-                    # Handle unsuccessful individual result sets if needed, or just pass them through
-                    processed_results.append(ResultSet(
-                        ColumnNames=res_item.get('ColumnNames', []),
-                        RowCount=res_item.get('RowCount', 0),
-                        Rows=res_item.get('Rows', []),
-                        MarkdownTable=None,  # Or some error message
-                        Success=False
-                    ))
+                    processed_results.append(
+                        ResultSet(ColumnNames=[], RowCount=0, Rows=[], MarkdownTable=None, Success=False))
+        return ExecuteScriptResult(RequestId=data.get('RequestId', ""), Results=processed_results,
+                                   Success=data.get('Success', False))
+    except Exception as e:
+        logger.error(f"Error in execute_script: {e}")
+        raise
 
-        return str(ExecuteScriptResult(
-            RequestId=data.get('RequestId', ""),
-            Results=processed_results,
-            Success=data.get('Success', False)
-        ))
-    except Exception as error:
-        logging.error(error)
-        raise error
-
-
-@mcp.tool(name="nl2sql",
-          description="Generate SELECT-type SQL queries from natural language input to answer arbitrary database "
-                      "query requests. The tool can automatically determine the relevant database tables from user "
-                      "questions and generate corresponding SQL statements for data retrieval.If you don't have the "
-                      "database_id, use the searchDatabase tool first to identify the"
-                      "correct database. The sql generated could be executed via DMS executeScript tool provided in "
-                      "this server if necessary.",
-          annotations={"title": "自然语言转SQL (DMS)", "readOnlyHint": True})
 async def nl2sql(
-        database_id: str = Field(description="DMS databaseId. If not provided, searchDatabase will be used first"),
-        question: str = Field(
-            description="Natural language question about the database that needs to be converted to SQL"),
-        knowledge: Optional[str] = Field(
-            description="Additional context or database knowledge to improve SQL generation", default=None)
+        database_id: str = Field(description="DMS databaseId"),
+        question: str = Field(description="Natural language question"),
+        knowledge: Optional[str] = Field(default=None, description="Additional context")
 ) -> SqlResult:
-    """Generate SQL from natural language questions about database data"""
-    if not isinstance(question, str) or not question.strip():
-        error_msg = "Question parameter must be a non-empty string"
-        logging.error(error_msg)
-        raise ValueError(error_msg)
-
     client = create_client()
-    generate_sql_from_nl_request = dms_enterprise_20181101_models.GenerateSqlFromNLRequest(
-        db_id=database_id, question=question)
-    if knowledge:
-        generate_sql_from_nl_request.knowledge = knowledge
+    req = dms_enterprise_20181101_models.GenerateSqlFromNLRequest(db_id=database_id, question=question)
+    if knowledge: req.knowledge = knowledge
     try:
-        response = client.generate_sql_from_nl(generate_sql_from_nl_request)
-        if response is None or not hasattr(response, 'body') or response.body is None:
-            logging.warning("Empty or invalid response received from DMS service")
-            return []
-        data = response.body.to_map()
-        if data:
-            sql = data.get('Data', {}).get('Sql')
-        return SqlResult(sql=sql)
-    except Exception as error:
-        logging.error(error)
-        raise error
+        resp = client.generate_sql_from_nl(req)
+        if not resp or not resp.body: return SqlResult(sql=None)
+        data = resp.body.to_map()
+        sql_content = data.get('Data', {}).get('Sql') if data else None
+        return SqlResult(sql=sql_content)
+    except Exception as e:
+        logger.error(f"Error in nl2sql_explicit_db: {e}")
+        raise
 
+# --- ToolRegistry Class ---
+class ToolRegistry:
+    def __init__(self, mcp: FastMCP):
+        self.mcp = mcp
+        self.default_database_id: Optional[str] = getattr(self.mcp.state, 'default_database_id', None)
 
-def main():
+    def register_tools(self) -> FastMCP:
+        if self.default_database_id:
+            logger.info(f"DATABASE_ID is set ('{self.default_database_id}'). Registering configured toolset.")
+            self._register_configured_db_toolset()
+        else:
+            logger.info("DATABASE_ID not set. Registering full toolset.")
+            self._register_full_toolset()
+        return self.mcp
+
+    def _register_configured_db_toolset(self):
+        @self.mcp.tool(name="listTables",
+                       description="Lists tables in the database. Search by name is supported.",
+                       annotations={"title": "List Tables (Pre-configured DB)", "readOnlyHint": True})
+        async def list_tables_configured(
+                search_name: str = Field(
+                    description="A non-empty string used as the search keyword to match table names."),
+                page_number: int = Field(description="Pagination page number", default=1),
+                page_size: int = Field(description="Number of results per page", default=200)
+        ) -> Dict[str, Any]:
+            return await list_tables(database_id=self.default_database_id, search_name=search_name,
+                                     page_number=page_number, page_size=page_size)
+
+        self.mcp.tool(name="getTableDetailInfo",
+                      description="Retrieve detailed metadata information for a specific table using its GUID.",
+                      annotations={"title": "Get Table Details", "readOnlyHint": True})(get_meta_table_detail_info)
+
+        @self.mcp.tool(name="executeScript",
+                       description="Executes an SQL script against the pre-configured database.",
+                       annotations={"title": "Execute SQL (Pre-configured DB)", "readOnlyHint": False,
+                                    "destructiveHint": True})
+        async def execute_script_configured(
+                script: str = Field(description="SQL script to execute"),
+                logic: bool = Field(description="Whether to use logical execution mode", default=False)
+        ) -> str:
+            result_obj = await execute_script(database_id=self.default_database_id, script=script, logic=logic)
+            return str(result_obj)
+
+        @self.mcp.tool(name="askDatabase",
+                       description="Ask a question in natural language to the pre-configured database and get results directly.",
+                       annotations={"title": "Ask Pre-configured Database", "readOnlyHint": True})
+        async def ask_database_configured(
+                question: str = Field(
+                    description="Your question in natural language about the pre-configured database."),
+                knowledge: Optional[str] = Field(default=None,
+                                                 description="Optional: Additional context to help formulate the SQL query.")
+        ) -> AskDatabaseResult:
+            sql_result_obj = await nl2sql(database_id=self.default_database_id, question=question,
+                                          knowledge=knowledge)
+            generated_sql = ""
+            if not sql_result_obj or not sql_result_obj.sql:
+                logger.warning(f"Failed to generate SQL for question: {question} on preconfigured DB.")
+                return AskDatabaseResult(executed_sql=generated_sql,
+                                         execution_result="Error: Could not generate an SQL query from your question.")
+
+            generated_sql = sql_result_obj.sql
+            logger.info(f"Generated SQL for pre-configured DB: {generated_sql}")
+            try:
+                execution_result_obj = await execute_script(database_id=self.default_database_id, script=generated_sql,
+                                                            logic=False)
+                return AskDatabaseResult(executed_sql=generated_sql, execution_result=str(execution_result_obj))
+            except Exception as e:
+                logger.error(f"Error executing SQL for pre-configured DB: {e}")
+                return AskDatabaseResult(executed_sql=generated_sql,
+                                         execution_result=f"Error: An issue occurred while executing the query: {str(e)}")
+
+    def _register_full_toolset(self):
+        self.mcp.tool(name="addInstance",
+                      description="Add an instance to DMS. If the instance already exists, it will return the existing instance information.",
+                      annotations={"title": "添加或获取DMS实例", "readOnlyHint": False, "destructiveHint": False})(
+            add_instance)
+        self.mcp.tool(name="getInstance", description="Retrieve detailed instance information from DMS.",
+                      annotations={"title": "获取DMS实例详情", "readOnlyHint": True})(get_instance)
+        self.mcp.tool(name="searchDatabase", description="Search databases in DMS based on their name.",
+                      annotations={"title": "搜索DMS数据库", "readOnlyHint": True})(search_database)
+        self.mcp.tool(name="getDatabase",
+                      description="Retrieve detailed information about a specific database from DMS.",
+                      annotations={"title": "获取DMS数据库详情", "readOnlyHint": True})(get_database)
+        self.mcp.tool(name="listTables",
+                      description="Search for database tables in DMS based on databaseId and tableName.",
+                      annotations={"title": "列出DMS表", "readOnlyHint": True})(list_tables)
+        self.mcp.tool(name="getTableDetailInfo",
+                      description="Retrieve detailed metadata information about a specific database table including "
+                                  "schema and index details.",
+                      annotations={"title": "获取DMS表详细信息", "readOnlyHint": True})(get_meta_table_detail_info)
+
+        @self.mcp.tool(name="executeScript",
+                       description="Execute SQL script against a database in DMS and return structured results.",
+                       annotations={"title": "在DMS中执行SQL脚本", "readOnlyHint": False, "destructiveHint": True})
+        async def execute_script_full_wrapper(
+                database_id: str = Field(description="Required DMS databaseId. Obtained via getDatabase tool"),
+                script: str = Field(description="SQL script to execute"),
+                logic: bool = Field(description="Whether to use logical execution mode", default=False)
+        ) -> str:  # Return string representation
+            result_obj = await execute_script(database_id=database_id, script=script, logic=logic)
+            return str(result_obj)
+
+        self.mcp.tool(name="generateSql", description="Generate SELECT-type SQL queries from natural language input.",
+                      annotations={"title": "自然语言转SQL (DMS)", "readOnlyHint": True})(nl2sql)
+
+# --- Lifespan Function ---
+@asynccontextmanager
+async def lifespan(app: FastMCP) -> AsyncGenerator[None, None]:
+    logger.info("Initializing DMS MCP Server via lifespan")
+
+    # Ensure app.state exists
+    if not hasattr(app, 'state') or app.state is None:
+        class AppState: pass
+
+        app.state = AppState()
+
+    app.state.default_database_id = None  # Initialize default_database_id
+
+    dms_connection_string = os.getenv("CONNECTION_STRING")
+    if dms_connection_string:
+        logger.info(f"CONNECTION_STRING environment variable found: {dms_connection_string}")
+        db_host, db_port, db_name_path, catalog_name = None, None, None, None
+        try:
+            # Expected formats:
+            # 1. catalog@host:port:schema  (PG, full)
+            # 2. database@host:port      (MySQL, database is schema-like)
+            # 3. host:port:schema          (No catalog, with schema)
+            # 4. host:port                 (No catalog, no schema)
+
+            parts = dms_connection_string.split('@')
+
+            potential_catalog_or_db_name = None
+            main_part = ""
+
+            if len(parts) > 1:  # Contains '@'
+                potential_catalog_or_db_name = parts[0]
+                main_part = parts[1]
+            else:  # No '@'
+                main_part = parts[0]
+
+            main_part_components = main_part.split(':')
+
+            if len(main_part_components) == 3:  # host:port:schema
+                db_host = main_part_components[0]
+                db_port = main_part_components[1]
+                db_name_path = main_part_components[2]  # This is schema
+                if potential_catalog_or_db_name:  # Format 1: catalog@host:port:schema
+                    catalog_name = potential_catalog_or_db_name
+                # else Format 3: host:port:schema (catalog_name remains None)
+
+            elif len(main_part_components) == 2:  # host:port
+                db_host = main_part_components[0]
+                db_port = main_part_components[1]
+                if potential_catalog_or_db_name:  # Format 2: database@host:port
+                    # Here, potential_catalog_or_db_name is the database/schema
+                    db_name_path = potential_catalog_or_db_name
+                    # For MySQL-like, catalog is not explicit in this way, so catalog_name remains None or is not used as such.
+                # else Format 4: host:port (db_name_path and catalog_name remain None)
+
+            else:
+                raise ValueError(
+                    f"Invalid format for host:port or host:port:schema part: '{main_part}' in CONNECTION_STRING '{dms_connection_string}'.")
+
+            if not (db_host and db_port):  # This check might be redundant if ValueError above catches it.
+                logger.error(
+                    f"CONNECTION_STRING '{dms_connection_string}' is incomplete. Missing host or port. Expected formats: catalog@host:port:schema, database@host:port, host:port:schema, host:port")
+            else:
+                logger.info(f"Verifying instance from CONNECTION_STRING: {db_host}:{db_port}")
+                try:
+                    instance_details = await get_instance(host=db_host, port=str(db_port), sid=None)
+                    if not instance_details or not hasattr(instance_details,
+                                                           'InstanceId') or not instance_details.InstanceId:
+                        logger.warning(
+                            f"Instance {db_host}:{db_port} not found or no valid InstanceId returned by get_instance. Cannot use this CONNECTION_STRING.")
+                    else:
+                        logger.info(f"Instance {db_host}:{db_port} verified. InstanceId: {instance_details.InstanceId}")
+
+                        if db_name_path or catalog_name:  # We need either a schema or a catalog to search
+                            search_term_for_db = catalog_name if catalog_name else db_name_path
+                            sid_name = None
+                            if catalog_name and db_name_path:
+                                sid_name = db_name_path
+                                logger.info(
+                                    f"Searching for database with catalog '{catalog_name}' and schema '{db_name_path}' associated with instance {db_host}:{db_port}")
+                            elif db_name_path:
+                                logger.info(
+                                    f"Searching for database schema '{db_name_path}' associated with instance {db_host}:{db_port}")
+                            elif catalog_name:
+                                logger.info(
+                                    f"Searching for database catalog '{catalog_name}' associated with instance {db_host}:{db_port}")
+
+                            database = await get_database(host=db_host,
+                                                          port=db_port, schema_name=search_term_for_db, sid=sid_name)
+                            if not database or database.DatabaseId is None:
+                                logger.warning(
+                                    f"No database found for {search_term_for_db} at {db_host}:{db_port} after processing CONNECTION_STRING.")
+                                database = await get_database(host=db_host, port=db_port, schema_name=search_term_for_db, sid=None)
+                            found_db_id = None
+                            if database:
+                                found_db_id = database.DatabaseId
+
+                            if found_db_id:
+                                app.state.default_database_id = found_db_id
+                                logger.info(
+                                    f"Successfully configured default_database_id to {found_db_id} using CONNECTION_STRING.")
+                            else:
+                                current_search_criteria = f"catalog '{catalog_name}', schema '{db_name_path}'" if catalog_name and db_name_path else f"schema '{db_name_path}'" if db_name_path else f"catalog '{catalog_name}'"
+                                logger.warning(
+                                    f"Could not find a matching database for {current_search_criteria} at {db_host}:{db_port} after processing CONNECTION_STRING.")
+                        else:
+                            logger.info(
+                                f"Instance {db_host}:{db_port} verified, but no catalog or schema provided in CONNECTION_STRING. No default database_id will be set from this DSN.")
+
+                except Exception as instance_e:
+                    logger.error(
+                        f"Error during instance verification or database search for CONNECTION_STRING '{dms_connection_string}': {instance_e}")
+
+        except ValueError as ve:
+            logger.error(
+                f"Invalid CONNECTION_STRING format '{dms_connection_string}': {ve}. Expected formats: catalog@host:port:schema, database@host:port, host:port:schema, or host:port")
+        except Exception as e:
+            logger.error(f"Error parsing CONNECTION_STRING '{dms_connection_string}': {e}")
+    else:
+        logger.info("CONNECTION_STRING environment variable not found.")
+
+    if app.state.default_database_id:
+        logger.info(f"Final default_database_id to be used (from CONNECTION_STRING): {app.state.default_database_id}")
+    else:
+        logger.info("No default database ID configured from CONNECTION_STRING. Full toolset will be registered.")
+
+    registry = ToolRegistry(mcp=app)
+    registry.register_tools()
+
+    yield
+
+    logger.info("Shutting down DMS MCP Server via lifespan")
+    if hasattr(app.state, 'default_database_id'):
+        delattr(app.state, 'default_database_id')
+
+# --- FastMCP Instance Creation & Server Run ---
+mcp = FastMCP(
+    "DatabaseManagementAssistant",
+    lifespan=lifespan,
+    on_duplicate_tools="replace",
+    instructions="Database Management Assistant (DMS) is a toolkit designed to assist users in managing and "
+                 "interacting with databases."
+)
+
+def run_server():
+    log_level_str = os.getenv("LOG_LEVEL", "INFO").upper()
+    logging.basicConfig(level=log_level_str, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    logger.info(f"Starting DMS MCP server with log level {log_level_str}")
     mcp.run(transport=os.getenv('SERVER_TRANSPORT', 'stdio'))
 
-
-if __name__ == '__main__':
-    # Initialize and run the server
-    main()
+if __name__ == "__main__":
+    run_server()
