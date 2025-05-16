@@ -461,21 +461,21 @@ async def lifespan(app: FastMCP) -> AsyncGenerator[None, None]:
     else:
         logger.info("DataSourceName environment variable not found.")
 
-    # Fallback to DMS_DATABASE_ID if not set by DataSourceName
+    # Fallback to DATABASE_ID if not set by DataSourceName
     if app.state.default_database_id is None:
-        logger.info("Attempting to use DMS_DATABASE_ID as fallback.")
-        preconfigured_db_id = os.getenv("DMS_DATABASE_ID")
+        logger.info("Attempting to use DATABASE_ID as fallback.")
+        preconfigured_db_id = os.getenv("DATABASE_ID")
         if preconfigured_db_id:
             app.state.default_database_id = preconfigured_db_id
-            logger.info(f"DMS_DATABASE_ID found and stored in app.state: {preconfigured_db_id}")
+            logger.info(f"DATABASE_ID found and stored in app.state: {preconfigured_db_id}")
         else:
             # app.state.default_database_id is already None, so just log
-            logger.info("DMS_DATABASE_ID not found, and no configuration from DataSourceName. No default database configured.")
+            logger.info("DATABASE_ID not found, and no configuration from DataSourceName. No default database configured.")
     
     if app.state.default_database_id:
         logger.info(f"Final default_database_id to be used: {app.state.default_database_id}")
     else:
-        logger.info("No default database ID configured after checking DataSourceName and DMS_DATABASE_ID.")
+        logger.info("No default database ID configured after checking DataSourceName and DATABASE_ID.")
 
     registry = ToolRegistry(mcp=app)
     registry.register_tools()
