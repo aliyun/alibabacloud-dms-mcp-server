@@ -348,7 +348,7 @@ class ToolRegistry:
                                                  description="Optional: Additional context to help formulate the SQL query.")
         ) -> str:
             sql_result_obj = await nl2sql(database_id=self.default_database_id, question=question,
-                                                      knowledge=knowledge)
+                                          knowledge=knowledge)
             if not sql_result_obj or not sql_result_obj.sql:
                 logger.warning(f"Failed to generate SQL for question: {question} on preconfigured DB.")
                 return "Error: Could not generate an SQL query from your question."
@@ -406,6 +406,7 @@ async def lifespan(app: FastMCP) -> AsyncGenerator[None, None]:
     # Ensure app.state exists
     if not hasattr(app, 'state') or app.state is None:
         class AppState: pass
+
         app.state = AppState()
 
     app.state.default_database_id = None  # Initialize default_database_id
@@ -422,115 +423,95 @@ async def lifespan(app: FastMCP) -> AsyncGenerator[None, None]:
             # 4. host:port                 (No catalog, no schema)
 
             parts = dms_connection_string.split('@')
-            
+
             potential_catalog_or_db_name = None
             main_part = ""
 
-            if len(parts) > 1: # Contains '@'
+            if len(parts) > 1:  # Contains '@'
                 potential_catalog_or_db_name = parts[0]
                 main_part = parts[1]
-            else: # No '@'
+            else:  # No '@'
                 main_part = parts[0]
 
             main_part_components = main_part.split(':')
 
-            if len(main_part_components) == 3: # host:port:schema
+            if len(main_part_components) == 3:  # host:port:schema
                 db_host = main_part_components[0]
                 db_port = main_part_components[1]
-                db_name_path = main_part_components[2] # This is schema
-                if potential_catalog_or_db_name: # Format 1: catalog@host:port:schema
+                db_name_path = main_part_components[2]  # This is schema
+                if potential_catalog_or_db_name:  # Format 1: catalog@host:port:schema
                     catalog_name = potential_catalog_or_db_name
                 # else Format 3: host:port:schema (catalog_name remains None)
-            
-            elif len(main_part_components) == 2: # host:port
+
+            elif len(main_part_components) == 2:  # host:port
                 db_host = main_part_components[0]
                 db_port = main_part_components[1]
-                if potential_catalog_or_db_name: # Format 2: database@host:port
+                if potential_catalog_or_db_name:  # Format 2: database@host:port
                     # Here, potential_catalog_or_db_name is the database/schema
                     db_name_path = potential_catalog_or_db_name
                     # For MySQL-like, catalog is not explicit in this way, so catalog_name remains None or is not used as such.
                 # else Format 4: host:port (db_name_path and catalog_name remain None)
-            
-            else:
-                raise ValueError(f"Invalid format for host:port or host:port:schema part: '{main_part}' in CONNECTION_STRING '{dms_connection_string}'.")
 
-            if not (db_host and db_port): # This check might be redundant if ValueError above catches it.
-                logger.error(f"CONNECTION_STRING '{dms_connection_string}' is incomplete. Missing host or port. Expected formats: catalog@host:port:schema, database@host:port, host:port:schema, host:port")
+            else:
+                raise ValueError(
+                    f"Invalid format for host:port or host:port:schema part: '{main_part}' in CONNECTION_STRING '{dms_connection_string}'.")
+
+            if not (db_host and db_port):  # This check might be redundant if ValueError above catches it.
+                logger.error(
+                    f"CONNECTION_STRING '{dms_connection_string}' is incomplete. Missing host or port. Expected formats: catalog@host:port:schema, database@host:port, host:port:schema, host:port")
             else:
                 logger.info(f"Verifying instance from CONNECTION_STRING: {db_host}:{db_port}")
                 try:
-                    instance_details = await get_instance(host=db_host, port=str(db_port))
-                    if not instance_details or not hasattr(instance_details, 'InstanceId') or not instance_details.InstanceId:
-                        logger.warning(f"Instance {db_host}:{db_port} not found or no valid InstanceId returned by get_instance. Cannot use this CONNECTION_STRING.")
+                    instance_details = await get_instance(host=db_host, port=str(db_port), sid=None)
+                    if not instance_details or not hasattr(instance_details,
+                                                           'InstanceId') or not instance_details.InstanceId:
+                        logger.warning(
+                            f"Instance {db_host}:{db_port} not found or no valid InstanceId returned by get_instance. Cannot use this CONNECTION_STRING.")
                     else:
                         logger.info(f"Instance {db_host}:{db_port} verified. InstanceId: {instance_details.InstanceId}")
-                        
-                        if db_name_path or catalog_name: # We need either a schema or a catalog to search
-                            search_term_for_db = db_name_path if db_name_path else catalog_name
-                            if catalog_name and db_name_path: # If both exist, prefer catalog.schema for search if possible, or just schema
-                                logger.info(f"Searching for database with catalog '{catalog_name}' and schema '{db_name_path}' associated with instance {db_host}:{db_port}")
+
+                        if db_name_path or catalog_name:  # We need either a schema or a catalog to search
+                            search_term_for_db = catalog_name
+                            if catalog_name and db_name_path:
+                                logger.info(
+                                    f"Searching for database with catalog '{catalog_name}' and schema '{db_name_path}' associated with instance {db_host}:{db_port}")
                             elif db_name_path:
-                                logger.info(f"Searching for database schema '{db_name_path}' associated with instance {db_host}:{db_port}")
+                                logger.info(
+                                    f"Searching for database schema '{db_name_path}' associated with instance {db_host}:{db_port}")
                             elif catalog_name:
-                                logger.info(f"Searching for database catalog '{catalog_name}' associated with instance {db_host}:{db_port}")
+                                logger.info(
+                                    f"Searching for database catalog '{catalog_name}' associated with instance {db_host}:{db_port}")
 
-                            databases = await search_database(search_key=search_term_for_db) # search_database handles catalog.schema internally
+                            database = await get_database(host=db_host,
+                                                          port=db_port, schema_name=search_term_for_db, sid=None)
                             found_db_id = None
-                            if databases:
-                                for db_info in databases:
-                                    # Ensure host and port match the instance
-                                    if db_info.Host == db_host and str(db_info.Port) == str(db_port):
-                                        # Construct the full schema name from db_info (catalog.schema or just schema)
-                                        # db_info.SchemaName already contains catalog.schema if catalog is not 'def'
-                                        
-                                        target_schema_to_match = db_name_path
-                                        if catalog_name and db_name_path and catalog_name != 'def':
-                                            # If user provided catalog@...:schema, we expect db_info.SchemaName to be catalog.schema
-                                            # or if db_info.SchemaName is just schema, then catalog_name should match the catalog part of db_info.SchemaName implicitly
-                                            # For simplicity, if user provides catalog and schema, we try to match db_info.SchemaName directly if it's catalog.schema
-                                            # or if db_info.SchemaName is just schema, we check if catalog_name matches the implicit catalog.
-                                            # The search_database function returns SchemaName as "catalog.schema" or "schema"
-                                            # If user provides "cat@host:port:sch", db_name_path="sch", catalog_name="cat"
-                                            # We need to match db_info.SchemaName which could be "cat.sch"
-                                            if f"{catalog_name}.{db_name_path}" == db_info.SchemaName:
-                                                found_db_id = db_info.DatabaseId
-                                                logger.info(f"Matching database found (catalog.schema match): ID {found_db_id} for '{db_info.SchemaName}' at {db_host}:{db_port}")
-                                                break
-                                        elif db_name_path and db_name_path == db_info.SchemaName: # Match schema directly
-                                            found_db_id = db_info.DatabaseId
-                                            logger.info(f"Matching database found (exact schema match): ID {found_db_id} for '{db_info.SchemaName}' at {db_host}:{db_port}")
-                                            break
-                                        # If only catalog_name is provided by user, and db_info.SchemaName is catalog.schema
-                                        elif catalog_name and not db_name_path and db_info.SchemaName.startswith(f"{catalog_name}."):
-                                            found_db_id = db_info.DatabaseId
-                                            logger.info(f"Matching database found (catalog prefix match): ID {found_db_id} for '{db_info.SchemaName}' at {db_host}:{db_port}")
-                                            break
-                                        # If only catalog_name is provided, and it's 'def', and db_info.SchemaName is just the schema (no catalog part)
-                                        elif catalog_name == 'def' and not db_name_path and '.' not in db_info.SchemaName:
-                                            # This case is tricky, as 'def' might mean any schema in the default catalog.
-                                            # For now, if user specifies 'def@host:port' without schema, we don't set a default DB.
-                                            pass
-
+                            if database:
+                                found_db_id = database.DatabaseId
 
                             if found_db_id:
                                 app.state.default_database_id = found_db_id
-                                logger.info(f"Successfully configured default_database_id to {found_db_id} using CONNECTION_STRING.")
+                                logger.info(
+                                    f"Successfully configured default_database_id to {found_db_id} using CONNECTION_STRING.")
                             else:
                                 current_search_criteria = f"catalog '{catalog_name}', schema '{db_name_path}'" if catalog_name and db_name_path else f"schema '{db_name_path}'" if db_name_path else f"catalog '{catalog_name}'"
-                                logger.warning(f"Could not find a matching database for {current_search_criteria} at {db_host}:{db_port} after processing CONNECTION_STRING.")
+                                logger.warning(
+                                    f"Could not find a matching database for {current_search_criteria} at {db_host}:{db_port} after processing CONNECTION_STRING.")
                         else:
-                            logger.info(f"Instance {db_host}:{db_port} verified, but no catalog or schema provided in CONNECTION_STRING. No default database_id will be set from this DSN.")
-                
+                            logger.info(
+                                f"Instance {db_host}:{db_port} verified, but no catalog or schema provided in CONNECTION_STRING. No default database_id will be set from this DSN.")
+
                 except Exception as instance_e:
-                    logger.error(f"Error during instance verification or database search for CONNECTION_STRING '{dms_connection_string}': {instance_e}")
+                    logger.error(
+                        f"Error during instance verification or database search for CONNECTION_STRING '{dms_connection_string}': {instance_e}")
 
         except ValueError as ve:
-             logger.error(f"Invalid CONNECTION_STRING format '{dms_connection_string}': {ve}. Expected formats: catalog@host:port:schema, database@host:port, host:port:schema, or host:port")
+            logger.error(
+                f"Invalid CONNECTION_STRING format '{dms_connection_string}': {ve}. Expected formats: catalog@host:port:schema, database@host:port, host:port:schema, or host:port")
         except Exception as e:
             logger.error(f"Error parsing CONNECTION_STRING '{dms_connection_string}': {e}")
     else:
         logger.info("CONNECTION_STRING environment variable not found.")
-    
+
     if app.state.default_database_id:
         logger.info(f"Final default_database_id to be used (from CONNECTION_STRING): {app.state.default_database_id}")
     else:
@@ -565,6 +546,8 @@ def run_server():
 
 if __name__ == "__main__":
     run_server()
+
+
 def run_server():
     log_level_str = os.getenv("LOG_LEVEL", "INFO").upper()
     logging.basicConfig(level=log_level_str, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
