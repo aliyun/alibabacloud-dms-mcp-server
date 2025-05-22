@@ -55,6 +55,7 @@ g_reserved = '''{
     "destSSL": "0",
     "a2aFlag": "2.0",
     "skipPrechecks": "CHECK_SAME_OBJ",
+    "channelInfo": "mcp",
     "autoStartModulesAfterConfig": "none"
 }
 '''
@@ -91,9 +92,9 @@ async def configure_dts_job(
         destination_endpoint_instance_id: str = Field(description="The destination endpoint instance ID (e.g., 'rm-xxx')"),
         destination_endpoint_user_name: str = Field(description="The destination endpoint user name"),
         destination_endpoint_password: str = Field(description="The destination endpoint password"),
-        db_list: Any = Field(description="The database objects in JSON format, including obejct type like: Database、Table")
+        db_list: Dict[str, Any] = Field(description='The database objects in JSON format, example 1: migration dtstest database, db_list should like {"dtstest":{"name":"dtstest","all":true}}; example 2: migration one table task01 in dtstest database, db_list should like {"dtstest":{"name":"dtstest","all":false,"Table":{"task01":{"name":"task01","all":true}}}}; example 3: migration two tables task01 and task02 in dtstest database, db_list should like {"dtstest":{"name":"dtstest","all":false,"Table":{"task01":{"name":"task01","all":true},"task02":{"name":"task02","all":true}}}}')
 ) -> Dict[str, Any]:
-    """Configure a dts job.
+    '''Configure a dts job.
 
     Args:
         region_id: Region ID.
@@ -110,11 +111,11 @@ async def configure_dts_job(
         destination_endpoint_instance_id: The destination endpoint instance ID (e.g., "rm-xxx").
         destination_endpoint_user_name: The destination endpoint user name.
         destination_endpoint_password: The destination endpoint password.
-        db_list: The database objects in JSON format, including obejct type like: Database、Table.
+        db_list: The database objects in JSON format, example 1: migration dtstest database, db_list should like {"dtstest":{"name":"dtstest","all":true}}; example 2: migration one table task01 in dtstest database, db_list should like {"dtstest":{"name":"dtstest","all":false,"Table":{"task01":{"name":"task01","all":true}}}}; example 3: migration two tables task01 and task02 in dtstest database, db_list should like {"dtstest":{"name":"dtstest","all":false,"Table":{"task01":{"name":"task01","all":true},"task02":{"name":"task02","all":true}}}}.
 
     Returns:
         Dict[str, Any]: Response containing the configured job details.
-    """
+    '''
     try:
         db_list_str = json.dumps(db_list, separators=(',', ':'))
         logger.info(f"Configure dts job with db_list: {db_list_str}")
@@ -144,6 +145,13 @@ async def configure_dts_job(
 
         # configure dts job
         ran_job_name = 'dtsmcp-' + ''.join(random.sample(string.ascii_letters + string.digits, 6))
+        custom_reserved = json.loads(g_reserved)
+        dts_mcp_channel = os.getenv('DTS_MCP_CHANNEL')
+        if dts_mcp_channel and len(dts_mcp_channel) > 0:
+            logger.info(f"Configure dts job with custom dts mcp channel: {dts_mcp_channel}")
+            custom_reserved['channelInfo'] = dts_mcp_channel
+        custom_reserved_str = json.dumps(custom_reserved, separators=(',', ':'))
+        logger.info(f"Configure dts job with reserved: {custom_reserved_str}")
         configure_dts_job_request = dts_20200101_models.ConfigureDtsJobRequest(
             region_id=region_id,
             dts_job_name=ran_job_name,
@@ -164,10 +172,10 @@ async def configure_dts_job(
             data_synchronization=False,
             job_type=job_type,
             db_list=db_list_str,
-            reserve=g_reserved
+            reserve=custom_reserved_str
         )
 
-        if len(dts_job_id) > 0:
+        if dts_job_id and len(dts_job_id) > 0:
             configure_dts_job_request.dts_job_id = dts_job_id
             
         configure_dts_job_response = client.configure_dts_job_with_options(configure_dts_job_request, runtime)
