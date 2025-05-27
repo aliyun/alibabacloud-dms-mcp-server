@@ -28,6 +28,7 @@ Key features via MCP include:
 - **Code Generation**: Retrieve schema information through this service to generate DAO code or perform structural analysis
 - **Data Retrieval**: Automatically route SQL to accurate data sources for business support
 - **Security**: Fine-grained access control and auditability
+- **Data Migration**: Create DTS migration tasks, docs: <a href="./doc/README-dts-en.md">DTS MCP Server</a>
 
 ---
 ## Tool List
