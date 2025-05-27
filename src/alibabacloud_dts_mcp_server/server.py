@@ -54,7 +54,6 @@ g_reserved = '''{
     "srcMySQLType": "HighAvailability",
     "destSSL": "0",
     "a2aFlag": "2.0",
-    "skipPrechecks": "CHECK_SAME_OBJ",
     "channelInfo": "mcp",
     "autoStartModulesAfterConfig": "none"
 }
