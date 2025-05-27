@@ -26,69 +26,48 @@
 - **NL2SQL**：通过自然语言执行SQL，获得数据结果  
 - **代码生成**：通过该服务获取schema信息，生成DAO代码或进行结构分析  
 - **取数**：通过SQL自动路由准确数据源获得数据，为上层业务提供数据支持  
-- **安全**：精细的访问控制和可审计性  
+- **安全**：精细的访问控制和可审计性 
+- **数据迁移**：配置数据迁移任务
 
+---
+## 使用方式
+DMS MCP Server 现在支持两种使用模式。
+
+### 模式一：多实例模式
+- 支持添加实例到DMS，可以访问多个数据库实例。
+- 适用于需要管理和访问多个数据库实例的场景。
+#### 场景示例：
+你是公司的DBA，需要在生产、测试和开发等多个环境中管理和访问 MySQL、Oracle 和 PostgreSQL 等多种数据库实例。通过DMS MCP Server，可以实现对这些异构数据库的统一接入与集中管理。
+
+### 模式二：单数据库模式
+- 通过在SERVER中配置 CONNECTION_STRING 参数（格式为 dbName@host:port），直接指定需要访问的数据库。
+- 适用于专注一个数据库访问的场景。
+#### 场景示例：
+你是一个开发人员，只需要频繁访问一个固定的数据库（如 mydb@192.168.1.100:3306）进行开发测试。在 DMS MCP Server 的配置中设置一个 CONNECTION_STRING 参数，例如：
+```ini
+CONNECTION_STRING = mydb@192.168.1.100:3306
+```
+之后每次启动服务时，DMS MCP Server都会直接访问这个指定的数据库，无需切换实例。
+
+---
 
 ## 工具清单
+| 工具名称           | 描述                                  | 适用模式                |
+|------------------|-------------------------------------|----------------------|
+| addInstance      | 将实例添加到 DMS。如果实例已存在，则返回已实例的信息。  | 多实例模式              |
+| getInstance      | 根据 host 和 port 获取实例详细信息。   | 多实例模式              |
+| searchDatabase    | 根据 schemaName 搜索数据库。         | 多实例模式              |
+| getDatabase      | 获取特定数据库的详细信息。            | 多实例模式              |
+| listTable        | 搜索指定数据库下的数据表。            | 多实例模式 & 单数据库模式 |
+| getTableDetailInfo | 获取特定数据库表的详细信息。        | 多实例模式 & 单数据库模式 |
+| executeScript    | 执行 SQL 脚本并返回结果。            | 多实例模式 & 单数据库模式 |
+| nl2sql           | 将自然语言问题转换为 SQL 查询。      | 多实例模式              |
+| askDatabase      | 自然语言查询数据库（NL2SQL + 执行 SQL）。 | 单数据库模式            |
+| configureDtsJob  | 配置DTS迁移任务                      | 多实例模式              |
+| startDtsJob      | 启动DTS迁移任务                      | 多实例模式              |
+| getDtsJob        | 查看DTS迁移任务详情                  | 多实例模式              |
 
-### 元数据相关
-#### addInstance：将实例添加到 DMS。如果实例已存在，则返回已有实例信息。
-
-- **db_user** (字符串, 必需): 用于连接数据库的用户名。
-- **db_password** (字符串, 必需): 用于连接数据库的密码。
-- **instance_resource_id** (字符串, 可选): 实例的资源 ID，通常由云服务提供商分配。
-- **host** (字符串, 可选): 实例的连接地址。
-- **port** (字符串, 可选): 实例的连接端口号。
-- **region** (字符串, 可选): 实例所在的区域（例如 "cn-hangzhou"）。
-
-#### getInstance：根据 host 和 port 信息从 DMS 中获取实例详细信息。
-
-- **host** (字符串, 必需): 实例的连接地址。
-- **port** (字符串, 必需): 实例的连接端口号。
-- **sid** (字符串, 可选): Oracle 类数据库所需，默认为 None。
-
-#### searchDatabase：根据 schemaName 在 DMS 中搜索数据库。
-
-- **search_key** (字符串, 必需): schemaName。
-- **page_number** (整数, 可选): 要检索的页码（从 1 开始），默认为 1。
-- **page_size** (整数, 可选): 每页的结果数量，最多 1000，默认为 200。
-
-#### getDatabase：从 DMS 中获取特定数据库的详细信息。
-
-- **host** (字符串, 必需): 实例的连接地址。
-- **port** (字符串, 必需): 实例的连接端口号。
-- **schema_name** (字符串, 必需): 数据库名。
-- **sid** (字符串, 可选): Oracle 类数据库所需，默认为 None。
-
-#### listTable：根据 databaseId 和 tableName 在 DMS 中搜索数据表。
-
-- **database_id** (字符串, 必需): 用于限定搜索范围的数据库 ID（可通过 getDatabase 工具获取）。
-- **search_name** (字符串, 必需): 作为搜索关键词的非空字符串，用于匹配表名。
-- **page_number** (整数, 可选): 分页页码（默认：1）。
-- **page_size** (整数, 可选): 每页结果数量（默认：200，最大：200）。
-
-#### getTableDetailInfo：获取特定数据表的详细元数据信息，包括字段和索引详情。
-
-- **table_guid** (字符串, 必需): 表的唯一标识符（格式：dmsTableId.schemaName.tableName），可通过 searchTable 或 listTable 工具获取。
-
----
-
-### SQL 执行相关
-
-#### executeScript：通过 DMS 执行 SQL 脚本并返回结果。
-
-- **database_id** (字符串, 必需): DMS 数据库 ID，可通过 getDatabase 工具获取。
-- **script** (字符串, 必需): 要执行的 SQL 脚本内容。
-
----
-
-### NL2SQL 相关
-
-#### nl2sql：将自然语言问题转换为可执行的 SQL 查询。
-
-- **question** (字符串, 必需): 需要转换为 SQL 的自然语言问题。
-- **database_id** (整数, 必需): DMS 数据库 ID，可通过 getDatabase 工具获取。
-- **knowledge** (字符串, 可选): 用于辅助 SQL 生成的额外上下文或数据库知识。
+<p> 详细工具列表请查阅：<a href="/doc/Tool-List-cn.md">工具清单</a><br></p>
 
 ---
 
@@ -118,6 +97,35 @@
 | Hologres              | ✅                  | ✅                                  | ✅                                    | ✅                           | ✅                      |
 
 ---
+## 前提条件
+- 已安装uv
+- 已安装Python 3.10+
+- 具有阿里云DMS访问权限的AK SK或者STS Token
+
+---
+## 预配置
+在通过DMS访问数据库实例之前，需要将实例添加到DMS中。
+
+可以通过以下两种方式进行实例的添加：
+
+**方法一：使用DMS MCP 提供的 `addInstance` 工具添加实例**
+
+DMS MCP Server提供了 `addInstance` 工具，用于快速将实例添加到 DMS 中。
+
+详情请见“工具清单”中的 `addInstance`工具描述。
+
+**方法二：通过 DMS 控制台页面添加实例**
+
+1 登录 [DMS 控制台](https://dms.aliyun.com/)。
+
+2 在控制台首页左侧的数据库实例区域，单击**新增实例**图标。
+
+3 在新增实例页面，录入实例信息（如实例地址、端口、用户名、密码）。
+
+4 单击**提交**按钮完成实例添加。
+
+
+---
 
 ## 快速开始
 
@@ -129,42 +137,90 @@ git clone https://github.com/aliyun/alibabacloud-dms-mcp-server.git
 
 #### 配置MCP客户端
 在配置文件中添加以下内容：
+
+**多实例模式**
 ```json
-"mcpServers": {
-  "dms-mcp-server": {
-    "command": "uv",
-    "args": [
-      "--directory",
-      "/path/to/alibabacloud-dms-mcp-server/src/alibabacloud_dms_mcp_server",
-      "run",
-      "server.py"
-    ],
-    "env": {
-      "ALIBABA_CLOUD_ACCESS_KEY_ID": "access_id",
-      "ALIBABA_CLOUD_ACCESS_KEY_SECRET": "access_key",
-      "ALIBABA_CLOUD_SECURITY_TOKEN": "sts_security_token optional, required when using STS Token"
+{
+  "mcpServers": {
+    "dms-mcp-server": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/path/to/alibabacloud-dms-mcp-server/src/alibabacloud_dms_mcp_server",
+        "run",
+        "server.py"
+      ],
+      "env": {
+        "ALIBABA_CLOUD_ACCESS_KEY_ID": "access_id",
+        "ALIBABA_CLOUD_ACCESS_KEY_SECRET": "access_key",
+        "ALIBABA_CLOUD_SECURITY_TOKEN": "sts_security_token optional, required when using STS Token"
+      }
     }
   }
 }
 ```
+**单数据库模式**
+```json
+{
+  "mcpServers": {
+    "dms-mcp-server": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/path/to/alibabacloud-dms-mcp-server/src/alibabacloud_dms_mcp_server",
+        "run",
+        "server.py"
+      ],
+      "env": {
+        "ALIBABA_CLOUD_ACCESS_KEY_ID": "access_id",
+        "ALIBABA_CLOUD_ACCESS_KEY_SECRET": "access_key",
+        "ALIBABA_CLOUD_SECURITY_TOKEN": "sts_security_token optional, required when using STS Token",
+        "CONNECTION_STRING": "dbName@host:port"
+      }
+    }
+  }
+}
+```
+
 
 ### 方案二 使用PyPI包运行
+**多实例模式**
 ```json
-"mcpServers": {
-  "dms-mcp-server": {
-    "command": "uvx",
-    "args": [
-      "alibabacloud-dms-mcp-server@latest"
-    ],
-    "env": {
-      "ALIBABA_CLOUD_ACCESS_KEY_ID": "access_id",
-      "ALIBABA_CLOUD_ACCESS_KEY_SECRET": "access_key",
-      "ALIBABA_CLOUD_SECURITY_TOKEN": "sts_security_token optional, required when using STS Token"
+{
+  "mcpServers": {
+    "dms-mcp-server": {
+      "command": "uvx",
+      "args": [
+        "alibabacloud-dms-mcp-server@latest"
+      ],
+      "env": {
+        "ALIBABA_CLOUD_ACCESS_KEY_ID": "access_id",
+        "ALIBABA_CLOUD_ACCESS_KEY_SECRET": "access_key",
+        "ALIBABA_CLOUD_SECURITY_TOKEN": "sts_security_token optional, required when using STS Token"
+      }
     }
   }
 }
 ```
-
+**单数据库模式**
+```json
+{
+  "mcpServers": {
+    "dms-mcp-server": {
+      "command": "uvx",
+      "args": [
+        "alibabacloud-dms-mcp-server@latest"
+      ],
+      "env": {
+        "ALIBABA_CLOUD_ACCESS_KEY_ID": "access_id",
+        "ALIBABA_CLOUD_ACCESS_KEY_SECRET": "access_key",
+        "ALIBABA_CLOUD_SECURITY_TOKEN": "sts_security_token optional, required when using STS Token",
+        "CONNECTION_STRING": "dbName@host:port"
+      }
+    }
+  }
+}
+```
 ---
 
 ## Contact us
