@@ -191,7 +191,7 @@ async def get_database(
 
 async def list_tables(  # Renamed from listTable to follow convention
         database_id: str = Field(description="DMS databaseId"),
-        search_name: str = Field(description="Search keyword for table names"),
+        search_name: str = Field(description="Search keyword for table names. % can be used as a wildcard"),
         page_number: int = Field(default=1, description="Pagination page number"),
         page_size: int = Field(default=200, description="Results per page (max 200)")
 ) -> Dict[str, Any]:

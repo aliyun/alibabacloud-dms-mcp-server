@@ -28,69 +28,47 @@ Key features via MCP include:
 - **Code Generation**: Retrieve schema information through this service to generate DAO code or perform structural analysis
 - **Data Retrieval**: Automatically route SQL to accurate data sources for business support
 - **Security**: Fine-grained access control and auditability
-
----
-## Tool List
-
-### Metadata Related
-
-#### addInstance: Add an instance to DMS. If the instance already exists, return the existing instance information.
-
-- **db_user** (string, required): Username for connecting to the database.
-- **db_password** (string, required): Password for connecting to the database.
-- **instance_resource_id** (string, optional): Resource ID of the instance, typically assigned by the cloud service provider.
-- **host** (string, optional): Connection address of the instance.
-- **port** (string, optional): Connection port number of the instance.
-- **region** (string, optional): Region where the instance is located (e.g., "cn-hangzhou").
-
-#### getInstance: Retrieve instance details from DMS based on host and port information.
-
-- **host** (string, required): Connection address of the instance.
-- **port** (string, required): Connection port number of the instance.
-- **sid** (string, optional): Required for Oracle-like databases, defaults to None.
-
-#### searchDatabase: Search for databases in DMS based on schemaName.
-
-- **search_key** (string, required): schemaName.
-- **page_number** (integer, optional): Page number to retrieve (starting from 1), default is 1.
-- **page_size** (integer, optional): Number of results per page (maximum 1000), default is 200.
-
-#### getDatabase: Retrieve detailed information about a specific database from DMS.
-
-- **host** (string, required): Connection address of the instance.
-- **port** (string, required): Connection port number of the instance.
-- **schema_name** (string, required): Database name.
-- **sid** (string, optional): Required for Oracle-like databases, defaults to None.
-
-#### listTable: Search for data tables in DMS based on databaseId and tableName.
-
-- **database_id** (string, required): Database ID to limit the search scope (obtained via getDatabase).
-- **search_name** (string, required): Non-empty string as a search keyword to match table names.
-- **page_number** (integer, optional): Pagination page number (default: 1).
-- **page_size** (integer, optional): Number of results per page (default: 200, maximum: 200).
-
-#### getTableDetailInfo: Retrieve detailed metadata information for a specific data table, including field and index details.
-
-- **table_guid** (string, required): Unique identifier for the table (format: dmsTableId.schemaName.tableName), obtained via searchTable or listTable.
+- **Data Migration**: Configure data migration tasks
 
 ---
 
-### SQL Execution Related
+## Usage Methods  
+DMS MCP Server currently supports two usage modes.
 
-#### executeScript: Execute an SQL script through DMS and return the results.
+### Mode One: Multi-instance Mode  
+- Supports adding instances to DMS, allowing access to multiple database instances.  
+- Suitable for scenarios where managing and accessing multiple database instances is required.  
+#### Scenario Example:  
+You are a company DBA who needs to manage and access various types of database instances (e.g., MySQL, Oracle, PostgreSQL) in production, test, and development environments. With DMS MCP Server, you can achieve unified access and centralized management of these heterogeneous databases.  
 
-- **database_id** (string, required): DMS database ID (obtained via getDatabase).
-- **script** (string, required): SQL script content to execute.
+### Mode Two: Single Database Mode  
+- Directly specify the target database by configuring the `CONNECTION_STRING` parameter in the server (format: `dbName@host:port`).  
+- Suitable for scenarios that focus on accessing a single database.  
+#### Scenario Example:  
+You are a developer who frequently accesses a fixed database (e.g., `mydb@192.168.1.100:3306`) for development and testing. Set the `CONNECTION_STRING` parameter in the DMS MCP Server configuration as follows:  
+```ini
+CONNECTION_STRING = mydb@192.168.1.100:3306
+```
+Afterward, every time the service starts, the DMS MCP Server will directly access this specified database without needing to switch instances.
 
 ---
+## Tool List  
+| Tool Name           | Description                                  | Applicable Mode                |
+|---------------------|---------------------------------------------|-------------------------------|
+| addInstance         | Adds an instance to DMS. If the instance already exists, it returns its information.  | Multi-instance Mode            |
+| getInstance         | Retrieves detailed information about an instance based on host and port.   | Multi-instance Mode            |
+| searchDatabase      | Searches databases based on schemaName.     | Multi-instance Mode            |
+| getDatabase         | Retrieves detailed information about a specific database.            | Multi-instance Mode            |
+| listTable           | Lists tables under a specified database.    | Multi-instance Mode & Single Database Mode |
+| getTableDetailInfo  | Retrieves detailed information about a specific table.        | Multi-instance Mode & Single Database Mode |
+| executeScript       | Executes an SQL script and returns the result.            | Multi-instance Mode & Single Database Mode |
+| nl2sql              | Converts natural language questions into SQL queries.      | Multi-instance Mode            |
+| askDatabase         | Natural language querying of a database (NL2SQL + execute SQL). | Single Database Mode           |
+| configureDtsJob     | Configures a DTS migration task                      | Multi-instance Mode            |
+| startDtsJob         | Starts a DTS migration task                          | Multi-instance Mode            |
+| getDtsJob           | Views details of a DTS migration task                | Multi-instance Mode            |
 
-### NL2SQL Related
-
-#### nl2sql: Convert natural language questions into executable SQL queries.
-
-- **question** (string, required): Natural language question to convert into SQL.
-- **database_id** (integer, required): DMS database ID (obtained via getDatabase).
-- **knowledge** (string, optional): Additional context or database knowledge to assist SQL generation.
+<p> For a full list of tools, please refer to: <a href="/doc/Tool-List-en.md">Tool List</a><br></p>
 
 
 
@@ -122,6 +100,29 @@ Key features via MCP include:
 | Hologres              | ✅                  | ✅                                  | ✅                                    | ✅                           | ✅                      |
 
 ---
+## Prerequisites  
+- uv is installed  
+- Python 3.10+ is installed  
+- An AK/SK or STS Token with access rights to Alibaba Cloud DMS  
+
+---
+## Pre-configuration  
+Before accessing a database instance via DMS, you must first add the instance to DMS.  
+
+There are two methods to add an instance:
+
+**Method One: Use the `addInstance` tool provided by DMS MCP to add an instance**  
+The DMS MCP Server provides the `addInstance` tool for quickly adding an instance to DMS.  
+For more details, see the description of the `addInstance` tool in the "Tool List."  
+
+**Method Two: Add an instance via the DMS console**  
+1. Log in to the [DMS Console](https://dms.aliyun.com/).  
+2. On the home page of the console, click the **Add Instance** icon in the database instance area on the left.  
+3. On the Add Instance page, enter the instance information (e.g., instance address, port, username, password).  
+4. Click **Submit** to complete the instance addition.  
+---
+
+
 
 ## Getting Started
 ### Option 1: Run from Source Code
@@ -132,42 +133,89 @@ git clone https://github.com/aliyun/alibabacloud-dms-mcp-server.git
 
 #### Configure MCP Client
 Add the following content to the configuration file:
+
+**Multi-instance Mode**
 ```json
-"mcpServers": {
-  "dms-mcp-server": {
-    "command": "uv",
-    "args": [
-      "--directory",
-      "/path/to/alibabacloud-dms-mcp-server/src/alibabacloud_dms_mcp_server",
-      "run",
-      "server.py"
-    ],
-    "env": {
-      "ALIBABA_CLOUD_ACCESS_KEY_ID": "access_id",
-      "ALIBABA_CLOUD_ACCESS_KEY_SECRET": "access_key",
-      "ALIBABA_CLOUD_SECURITY_TOKEN": "sts_security_token optional, required when using STS Token"
+{
+  "mcpServers": {
+    "dms-mcp-server": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/path/to/alibabacloud-dms-mcp-server/src/alibabacloud_dms_mcp_server",
+        "run",
+        "server.py"
+      ],
+      "env": {
+        "ALIBABA_CLOUD_ACCESS_KEY_ID": "access_id",
+        "ALIBABA_CLOUD_ACCESS_KEY_SECRET": "access_key",
+        "ALIBABA_CLOUD_SECURITY_TOKEN": "sts_security_token optional, required when using STS Token"
+      }
+    }
+  }
+}
+```
+
+**Single Database Mode**
+```json
+{
+  "mcpServers": {
+    "dms-mcp-server": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/path/to/alibabacloud-dms-mcp-server/src/alibabacloud_dms_mcp_server",
+        "run",
+        "server.py"
+      ],
+      "env": {
+        "ALIBABA_CLOUD_ACCESS_KEY_ID": "access_id",
+        "ALIBABA_CLOUD_ACCESS_KEY_SECRET": "access_key",
+        "ALIBABA_CLOUD_SECURITY_TOKEN": "sts_security_token optional, required when using STS Token",
+        "CONNECTION_STRING": "dbName@host:port"
+      }
     }
   }
 }
 ```
 ### Option 2: Run via PyPI Package
-
+**Multi-instance Mode**
 ```json
-"mcpServers": {
-  "dms-mcp-server": {
-    "command": "uvx",
-    "args": [
-      "alibabacloud-dms-mcp-server@latest"
-    ],
-    "env": {
-      "ALIBABA_CLOUD_ACCESS_KEY_ID": "access_id",
-      "ALIBABA_CLOUD_ACCESS_KEY_SECRET": "access_key",
-      "ALIBABA_CLOUD_SECURITY_TOKEN": "sts_security_token optional, required when using STS Token"
+{
+  "mcpServers": {
+    "dms-mcp-server": {
+      "command": "uvx",
+      "args": [
+        "alibabacloud-dms-mcp-server@latest"
+      ],
+      "env": {
+        "ALIBABA_CLOUD_ACCESS_KEY_ID": "access_id",
+        "ALIBABA_CLOUD_ACCESS_KEY_SECRET": "access_key",
+        "ALIBABA_CLOUD_SECURITY_TOKEN": "sts_security_token optional, required when using STS Token"
+      }
     }
   }
 }
 ```
-
+**Single Database Mode**
+```json
+{
+  "mcpServers": {
+    "dms-mcp-server": {
+      "command": "uvx",
+      "args": [
+        "alibabacloud-dms-mcp-server@latest"
+      ],
+      "env": {
+        "ALIBABA_CLOUD_ACCESS_KEY_ID": "access_id",
+        "ALIBABA_CLOUD_ACCESS_KEY_SECRET": "access_key",
+        "ALIBABA_CLOUD_SECURITY_TOKEN": "sts_security_token optional, required when using STS Token",
+        "CONNECTION_STRING": "dbName@host:port"
+      }
+    }
+  }
+}
+```
 
 ---
 
