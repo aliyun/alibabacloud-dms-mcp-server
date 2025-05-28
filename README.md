@@ -186,7 +186,7 @@ Add the following content to the configuration file:
     "dms-mcp-server": {
       "command": "uvx",
       "args": [
-        "alibabacloud-dms-mcp-server@latest"
+        "alibabacloud-dms-mcp-server@1.1"
       ],
       "env": {
         "ALIBABA_CLOUD_ACCESS_KEY_ID": "access_id",

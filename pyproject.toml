@@ -1,6 +1,6 @@
 [project]
 name = "alibabacloud-dms-mcp-server"
-version = "0.1.4"
+version = "0.1.5"
 description = "MCP Server for AlibabaCloud DMS"
 readme = "README.md"
 authors = [
@@ -27,7 +27,7 @@ dev = [
 ]
 
 [project.scripts]
-alibabacloud-dms-mcp-server = "alibabacloud_dms_mcp_server.server:main"
+alibabacloud-dms-mcp-server = "alibabacloud_dms_mcp_server.server:run_server"
 
 [build-system]
 requires = ["hatchling"]
