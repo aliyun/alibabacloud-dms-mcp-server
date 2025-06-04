@@ -103,6 +103,8 @@ class ResultSet(MyBaseModel):
     Rows: List[Dict[str, Any]] = Field(description="List of rows, where each row is a dictionary of column_name: value")
     MarkdownTable: Optional[str] = Field(default=None, description="Data formatted as a Markdown table string")
     Success: bool = Field(description="Whether this result set was successfully retrieved")
+    Message: str = Field(description="Additional message returned")
+
 
 class ExecuteScriptResult(MyBaseModel):
     RequestId: str = Field(description="Unique request identifier")
@@ -115,7 +117,7 @@ class ExecuteScriptResult(MyBaseModel):
             if first_result.Success and first_result.MarkdownTable:
                 return first_result.MarkdownTable
             elif not first_result.Success:
-                return "The first result set was not successful."
+                return first_result.Message
             else:
                 return "Result data is not available in Markdown format."
         elif not self.Success:
@@ -296,10 +298,10 @@ async def execute_script(
                     markdown_table = _format_as_markdown_table(column_names, rows_data)
                     processed_results.append(
                         ResultSet(ColumnNames=column_names, RowCount=res_item.get('RowCount', 0), Rows=rows_data,
-                                  MarkdownTable=markdown_table, Success=True))
+                                  MarkdownTable=markdown_table, Success=True, Message=''))
                 else:
                     processed_results.append(
-                        ResultSet(ColumnNames=[], RowCount=0, Rows=[], MarkdownTable=None, Success=False))
+                        ResultSet(ColumnNames=[], RowCount=0, Rows=[], MarkdownTable=None, Success=False, Message=res_item.get('Message')))
         return ExecuteScriptResult(RequestId=data.get('RequestId', ""), Results=processed_results,
                                    Success=data.get('Success', False))
     except Exception as e:
