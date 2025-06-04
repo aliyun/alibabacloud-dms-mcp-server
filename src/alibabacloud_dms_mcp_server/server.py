@@ -235,10 +235,12 @@ async def get_database(
 
 async def list_tables(  # Renamed from listTable to follow convention
         database_id: str = Field(description="DMS databaseId"),
-        search_name: str = Field(description="Search keyword for table names. % can be used as a wildcard"),
+        search_name: Optional[str] = Field(description="Optional: Search keyword for table names"),
         page_number: int = Field(default=1, description="Pagination page number"),
         page_size: int = Field(default=200, description="Results per page (max 200)")
 ) -> Dict[str, Any]:
+    if not search_name:
+        search_name = "%"
     client = create_client()
     req = dms_enterprise_20181101_models.ListTablesRequest(database_id=database_id, search_name=search_name,
                                                            page_number=page_number, page_size=page_size,
@@ -462,11 +464,13 @@ class ToolRegistry:
                        description="Lists tables in the database. Search by name is supported.",
                        annotations={"title": "List Tables (Pre-configured DB)", "readOnlyHint": True})
         async def list_tables_configured(
-                search_name: str = Field(
-                    description="A non-empty string used as the search keyword to match table names."),
+                search_name: Optional[str] = Field(
+                    description="Optional: A string used as the search keyword to match table names."),
                 page_number: int = Field(description="Pagination page number", default=1),
                 page_size: int = Field(description="Number of results per page", default=200)
         ) -> Dict[str, Any]:
+            if not search_name:
+                search_name = "%"
             return await list_tables(database_id=self.default_database_id, search_name=search_name,
                                      page_number=page_number, page_size=page_size)
 
