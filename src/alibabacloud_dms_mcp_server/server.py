@@ -268,7 +268,7 @@ async def get_meta_table_detail_info(
         raise
 
 def _format_as_markdown_table(column_names: List[str], rows: List[Dict[str, Any]]) -> str:
-    if not column_names or not rows: return ""
+    if not column_names: return ""
     header = "| " + " | ".join(column_names) + " |"
     separator = "| " + " | ".join(["---"] * len(column_names)) + " |"
     table_rows_str = [header, separator]
@@ -306,7 +306,8 @@ async def execute_script(
                                    Success=data.get('Success', False))
     except Exception as e:
         logger.error(f"Error in execute_script: {e}")
-        raise
+        if "The instance is not in secure hosting mode" in str(e):
+            return "当前实例尚未开启安全托管功能。您可以通过DMS控制台免费开启「安全托管模式」。请注意，该操作需要管理员或DBA身份权限。"
 
 async def nl2sql(
         database_id: str = Field(description="DMS databaseId"),
