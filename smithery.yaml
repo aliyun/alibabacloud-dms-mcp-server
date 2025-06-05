@@ -1,0 +1,37 @@
+# Smithery configuration file: https://smithery.ai/docs/build/project-config
+
+startCommand:
+  type: stdio
+  configSchema:
+    # JSON Schema defining the configuration options for the MCP.
+    type: object
+    required:
+      - alibabaCloudAccessKeyId
+      - alibabaCloudAccessKeySecret
+    properties:
+      alibabaCloudAccessKeyId:
+        type: string
+        description: Alibaba Cloud Access Key ID
+      alibabaCloudAccessKeySecret:
+        type: string
+        description: Alibaba Cloud Access Key Secret
+      alibabaCloudSecurityToken:
+        type: string
+        default: ""
+        description: Alibaba Cloud Security Token (optional)
+  commandFunction:
+    # A JS function that produces the CLI command based on the given config to start the MCP on stdio.
+    |-
+    (config) => ({
+      command: 'alibabacloud-dms-mcp-server',
+      args: [],
+      env: {
+        ALIBABA_CLOUD_ACCESS_KEY_ID: config.alibabaCloudAccessKeyId,
+        ALIBABA_CLOUD_ACCESS_KEY_SECRET: config.alibabaCloudAccessKeySecret,
+        ALIBABA_CLOUD_SECURITY_TOKEN: config.alibabaCloudSecurityToken || ''
+      }
+    })
+  exampleConfig:
+    alibabaCloudAccessKeyId: YOUR_ACCESS_KEY_ID
+    alibabaCloudAccessKeySecret: YOUR_ACCESS_KEY_SECRET
+    alibabaCloudSecurityToken: ""
