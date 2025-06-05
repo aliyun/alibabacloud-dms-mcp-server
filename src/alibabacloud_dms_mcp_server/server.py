@@ -255,7 +255,7 @@ async def list_tables(  # Renamed from listTable to follow convention
         raise
 
 async def get_meta_table_detail_info(
-        table_guid: str = Field(description="Unique table identifier (format: dmsTableId.schemaName.tableName)")
+        table_guid: str = Field(description="Unique table identifier (format: dmsTableId.schemaName.tableName),Example: IDB_1567890.mySchema.myTable")
 ) -> TableDetail:
     client = create_client()
     req = dms_enterprise_20181101_models.GetMetaTableDetailInfoRequest(table_guid=table_guid)

@@ -41,9 +41,9 @@ DMS MCP Server 现在支持两种使用模式。
 
 **典型提问示例：**  
 - 获取所有名称为test的数据库列表
-- 获取 xxxhost:xxxport 实例中 test_db 数据库的详细信息。
+- 获取 myHost:myPort 实例中 test_db 数据库的详细信息。
 - test_db 数据库下有哪些表？ 
-- 使用nl2sql工具，使用test_db 数据库回答“今天的用户访问量是多少？”
+- 使用工具， 查询test_db 库的数据，回答“今天的用户访问量是多少？”
 
 
 ### 模式二：单数据库模式
@@ -58,9 +58,9 @@ CONNECTION_STRING = mydb@192.168.1.100:3306
 
 **典型提问示例：**  
 - 我有哪些表？
-- 查看test_table表的字段结构
-- 获取test_table表的前20条数据
-- 使用askDatabase工具，回答“今天的用户访问量是多少？”
+- 查看test_table 表的字段结构
+- 获取test_table 表的前20条数据
+- 使用工具，回答“今天的用户访问量是多少？”
 
 ---
 
