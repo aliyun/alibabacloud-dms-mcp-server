@@ -255,7 +255,7 @@ async def list_tables(  # Renamed from listTable to follow convention
         raise
 
 async def get_meta_table_detail_info(
-        table_guid: str = Field(description="Unique table identifier (format: dmsTableId.schemaName.tableName)")
+        table_guid: str = Field(description="Unique table identifier (format: dmsTableId.schemaName.tableName),Example: IDB_1567890.mySchema.myTable")
 ) -> TableDetail:
     client = create_client()
     req = dms_enterprise_20181101_models.GetMetaTableDetailInfoRequest(table_guid=table_guid)
@@ -537,7 +537,7 @@ class ToolRegistry:
         self.mcp.tool(name="searchDatabase", description="Search databases in DMS based on their name.",
                       annotations={"title": "搜索DMS数据库", "readOnlyHint": True})(search_database)
         self.mcp.tool(name="getDatabase",
-                      description="Retrieve detailed information about a specific database from DMS.",
+                      description="Obtain detailed information about a specific database in DMS when the host and port are provided.",
                       annotations={"title": "获取DMS数据库详情", "readOnlyHint": True})(get_database)
         self.mcp.tool(name="listTables",
                       description="Search for database tables in DMS based on databaseId and tableName.",
