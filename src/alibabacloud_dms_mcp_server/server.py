@@ -537,7 +537,7 @@ class ToolRegistry:
         self.mcp.tool(name="searchDatabase", description="Search databases in DMS based on their name.",
                       annotations={"title": "搜索DMS数据库", "readOnlyHint": True})(search_database)
         self.mcp.tool(name="getDatabase",
-                      description="Retrieve detailed information about a specific database from DMS.",
+                      description="Obtain detailed information about a specific database in DMS when the host and port are provided.",
                       annotations={"title": "获取DMS数据库详情", "readOnlyHint": True})(get_database)
         self.mcp.tool(name="listTables",
                       description="Search for database tables in DMS based on databaseId and tableName.",
