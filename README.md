@@ -115,7 +115,7 @@ Afterward, every time the service starts, the DMS MCP Server will directly acces
 ## Prerequisites  
 - uv is installed  
 - Python 3.10+ is installed  
-- An AK/SK or STS Token with access rights to Alibaba Cloud DMS  
+- An AK/SK or STS Token with access rights to Alibaba Cloud DMS(AliyunDMSFullAccess)
 
 ---
 ## Pre-configuration  

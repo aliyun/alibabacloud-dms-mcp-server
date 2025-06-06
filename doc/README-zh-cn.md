@@ -113,7 +113,7 @@ CONNECTION_STRING = mydb@192.168.1.100:3306
 ## 前提条件
 - 已安装uv
 - 已安装Python 3.10+
-- 具有阿里云DMS访问权限的AK SK或者STS Token
+- 具有阿里云DMS访问权限(AliyunDMSFullAccess)的AK SK或者STS Token
 
 ---
 ## 准备工作
