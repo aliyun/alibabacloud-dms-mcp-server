@@ -41,6 +41,12 @@ DMS MCP Server currently supports two usage modes.
 #### Scenario Example:  
 You are a company DBA who needs to manage and access various types of database instances (e.g., MySQL, Oracle, PostgreSQL) in production, test, and development environments. With DMS MCP Server, you can achieve unified access and centralized management of these heterogeneous databases.  
 
+**Typical Question Examples:**  
+- Get a list of all databases named `test`.  
+- Retrieve details of the `test_db` database from the `myHost:myPort` instance.  
+- What tables are in the `test_db` database?  
+- Use a tool to query data from the `test_db` database and answer: "What is today's user traffic?"
+
 ### Mode Two: Single Database Mode  
 - Directly specify the target database by configuring the `CONNECTION_STRING` parameter in the server (format: `dbName@host:port`).  
 - Suitable for scenarios that focus on accessing a single database.  
@@ -50,6 +56,12 @@ You are a developer who frequently accesses a fixed database (e.g., `mydb@192.16
 CONNECTION_STRING = mydb@192.168.1.100:3306
 ```
 Afterward, every time the service starts, the DMS MCP Server will directly access this specified database without needing to switch instances.
+
+**Typical Question Examples:**  
+- What tables do I have?  
+- Show the field structure of the `test_table` table.  
+- Retrieve the first 20 rows from the `test_table` table.  
+- Use a tool to answer: "What is today's user traffic?"
 
 ---
 ## Tool List  
@@ -76,34 +88,34 @@ Afterward, every time the service starts, the DMS MCP Server will directly acces
 
 ## Supported Data Sources
 | DataSource/Tool       | **NL2SQL** *nlsql* | **Execute script** *executeScript* | **Show schema** *getTableDetailInfo* | **Access control** *default* | **Audit log** *default* |
-|-----------------------|--------------------|------------------------------------|--------------------------------------|-----------------------------|------------------------|
-| MySQL                 | ✅                  | ✅                                  | ✅                                    | ✅                           | ✅                      |
-| MariaDB               | ✅                  | ✅                                  | ✅                                    | ✅                           | ✅                      |
-| PostgreSQL            | ✅                  | ✅                                  | ✅                                    | ✅                           | ✅                      |
-| Oracle                | ✅                  | ✅                                  | ✅                                    | ✅                           | ✅                      |
-| SQLServer             | ✅                  | ✅                                  | ✅                                    | ✅                           | ✅                      |
-| Redis                 | ✅                  | ✅                                  | ✅                                    | ✅                           | ✅                      |
-| MongoDB               | ✅                  | ✅                                  | ✅                                    | ✅                           | ✅                      |
-| StarRocks             | ✅                  | ✅                                  | ✅                                    | ✅                           | ✅                      |
-| Clickhouse            | ✅                  | ✅                                  | ✅                                    | ✅                           | ✅                      |
-| SelectDB              | ✅                  | ✅                                  | ✅                                    | ✅                           | ✅                      |
-| DB2                   | ✅                  | ✅                                  | ✅                                    | ✅                           | ✅                      |
-| OceanBase             | ✅                  | ✅                                  | ✅                                    | ✅                           | ✅                      |
-| Gauss                 | ✅                  | ✅                                  | ✅                                    | ✅                           | ✅                      |
-| BigQuery              | ✅                  | ✅                                  | ✅                                    | ✅                           | ✅                      |
-| PolarDB               | ✅                  | ✅                                  | ✅                                    | ✅                           | ✅                      |
-| PolarDB-X             | ✅                  | ✅                                  | ✅                                    | ✅                           | ✅                      |
-| AnalyticDB            | ✅                  | ✅                                  | ✅                                    | ✅                           | ✅                      |
-| Lindorm               | ✅                  | ✅                                  | ✅                                    | ✅                           | ✅                      |
-| TableStore            | ✅                  | ✅                                  | ✅                                    | ✅                           | ✅                      |
-| Maxcompute            | ✅                  | ✅                                  | ✅                                    | ✅                           | ✅                      |
-| Hologres              | ✅                  | ✅                                  | ✅                                    | ✅                           | ✅                      |
+|-----------------------|-----------------|---------------------------------|--------------------------------------|-----------------------------|------------------------|
+| MySQL                 | ✅               | ✅                               | ✅                                    | ✅                           | ✅                      |
+| MariaDB               | ✅               | ✅                               | ✅                                    | ✅                           | ✅                      |
+| PostgreSQL            | ✅               | ✅                               | ✅                                    | ✅                           | ✅                      |
+| Oracle                | ✅               | ✅                               | ✅                                    | ✅                           | ✅                      |
+| SQLServer             | ✅               | ✅                               | ✅                                    | ✅                           | ✅                      |
+| Redis                 | ❌               | ❌                                | ✅                                    | ✅                           | ✅                      |
+| MongoDB               | ❌               | ❌                                | ✅                                    | ✅                           | ✅                      |
+| StarRocks             | ✅               | ✅                               | ✅                                    | ✅                           | ✅                      |
+| Clickhouse            | ✅               | ✅                               | ✅                                    | ✅                           | ✅                      |
+| SelectDB              | ✅               | ✅                               | ✅                                    | ✅                           | ✅                      |
+| DB2                   | ✅               | ✅                               | ✅                                    | ✅                           | ✅                      |
+| OceanBase             | ✅               | ✅                               | ✅                                    | ✅                           | ✅                      |
+| Gauss                 | ✅               | ✅                               | ✅                                    | ✅                           | ✅                      |
+| BigQuery              | ✅               | ✅                               | ✅                                    | ✅                           | ✅                      |
+| PolarDB               | ✅               | ✅                               | ✅                                    | ✅                           | ✅                      |
+| PolarDB-X             | ✅               | ✅                               | ✅                                    | ✅                           | ✅                      |
+| AnalyticDB            | ✅               | ✅                               | ✅                                    | ✅                           | ✅                      |
+| Lindorm               | ✅               | ✅                               | ✅                                    | ✅                           | ✅                      |
+| TableStore            | ❌               | ❌                                | ✅                                    | ✅                           | ✅                      |
+| Maxcompute            | ✅               | ✅                               | ✅                                    | ✅                           | ✅                      |
+| Hologres              | ✅               | ✅                               | ✅                                    | ✅                           | ✅                      |
 
 ---
 ## Prerequisites  
 - uv is installed  
 - Python 3.10+ is installed  
-- An AK/SK or STS Token with access rights to Alibaba Cloud DMS  
+- An AK/SK or STS Token with access rights to Alibaba Cloud DMS(AliyunDMSFullAccess)
 
 ---
 ## Pre-configuration  
