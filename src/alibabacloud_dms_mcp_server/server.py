@@ -237,7 +237,7 @@ async def get_database(
 
 async def list_tables(  # Renamed from listTable to follow convention
         database_id: str = Field(description="DMS databaseId"),
-        search_name: Optional[str] = Field(description="Optional: Search keyword for table names"),
+        search_name: Optional[str] = Field(default=None,description="Optional: Search keyword for table names"),
         page_number: int = Field(default=1, description="Pagination page number"),
         page_size: int = Field(default=200, description="Results per page (max 200)")
 ) -> Dict[str, Any]:
@@ -467,7 +467,7 @@ class ToolRegistry:
                        description="Lists tables in the database. Search by name is supported.",
                        annotations={"title": "List Tables (Pre-configured DB)", "readOnlyHint": True})
         async def list_tables_configured(
-                search_name: Optional[str] = Field(
+                search_name: Optional[str] = Field(default=None,
                     description="Optional: A string used as the search keyword to match table names."),
                 page_number: int = Field(description="Pagination page number", default=1),
                 page_size: int = Field(description="Number of results per page", default=200)

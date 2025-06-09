@@ -86,28 +86,28 @@ CONNECTION_STRING = mydb@192.168.1.100:3306
 
 ## 支持的数据源
 | DataSource/Tool       | **NL2SQL** *nlsql* | **Execute script** *executeScript* | **Show schema** *getTableDetailInfo* | **Access control** *default* | **Audit log** *default* |
-|-----------------------|--------------------|------------------------------------|--------------------------------------|-----------------------------|------------------------|
-| MySQL                 | ✅                  | ✅                                  | ✅                                    | ✅                           | ✅                      |
-| MariaDB               | ✅                  | ✅                                  | ✅                                    | ✅                           | ✅                      |
-| PostgreSQL            | ✅                  | ✅                                  | ✅                                    | ✅                           | ✅                      |
-| Oracle                | ✅                  | ✅                                  | ✅                                    | ✅                           | ✅                      |
-| SQLServer             | ✅                  | ✅                                  | ✅                                    | ✅                           | ✅                      |
-| Redis                 | ✅                  | ✅                                  | ✅                                    | ✅                           | ✅                      |
-| MongoDB               | ✅                  | ✅                                  | ✅                                    | ✅                           | ✅                      |
-| StarRocks             | ✅                  | ✅                                  | ✅                                    | ✅                           | ✅                      |
-| Clickhouse            | ✅                  | ✅                                  | ✅                                    | ✅                           | ✅                      |
-| SelectDB              | ✅                  | ✅                                  | ✅                                    | ✅                           | ✅                      |
-| DB2                   | ✅                  | ✅                                  | ✅                                    | ✅                           | ✅                      |
-| OceanBase             | ✅                  | ✅                                  | ✅                                    | ✅                           | ✅                      |
-| Gauss                 | ✅                  | ✅                                  | ✅                                    | ✅                           | ✅                      |
-| BigQuery              | ✅                  | ✅                                  | ✅                                    | ✅                           | ✅                      |
-| PolarDB               | ✅                  | ✅                                  | ✅                                    | ✅                           | ✅                      |
-| PolarDB-X             | ✅                  | ✅                                  | ✅                                    | ✅                           | ✅                      |
-| AnalyticDB            | ✅                  | ✅                                  | ✅                                    | ✅                           | ✅                      |
-| Lindorm               | ✅                  | ✅                                  | ✅                                    | ✅                           | ✅                      |
-| TableStore            | ✅                  | ✅                                  | ✅                                    | ✅                           | ✅                      |
-| Maxcompute            | ✅                  | ✅                                  | ✅                                    | ✅                           | ✅                      |
-| Hologres              | ✅                  | ✅                                  | ✅                                    | ✅                           | ✅                      |
+|-----------------------|----------------|---------------------------------|--------------------------------------|-----------------------------|------------------------|
+| MySQL                 | ✅              | ✅                               | ✅                                    | ✅                           | ✅                      |
+| MariaDB               | ✅              | ✅                               | ✅                                    | ✅                           | ✅                      |
+| PostgreSQL            | ✅              | ✅                               | ✅                                    | ✅                           | ✅                      |
+| Oracle                | ✅              | ✅                               | ✅                                    | ✅                           | ✅                      |
+| SQLServer             | ✅              | ✅                               | ✅                                    | ✅                           | ✅                      |
+| Redis                 | ❌               | ❌                                | ✅                                    | ✅                           | ✅                      |
+| MongoDB               | ❌               | ❌                                | ✅                                    | ✅                           | ✅                      |
+| StarRocks             | ✅              | ✅                               | ✅                                    | ✅                           | ✅                      |
+| Clickhouse            | ✅              | ✅                               | ✅                                    | ✅                           | ✅                      |
+| SelectDB              | ✅              | ✅                               | ✅                                    | ✅                           | ✅                      |
+| DB2                   | ✅              | ✅                               | ✅                                    | ✅                           | ✅                      |
+| OceanBase             | ✅              | ✅                               | ✅                                    | ✅                           | ✅                      |
+| Gauss                 | ✅              | ✅                               | ✅                                    | ✅                           | ✅                      |
+| BigQuery              | ✅              | ✅                               | ✅                                    | ✅                           | ✅                      |
+| PolarDB               | ✅              | ✅                               | ✅                                    | ✅                           | ✅                      |
+| PolarDB-X             | ✅              | ✅                               | ✅                                    | ✅                           | ✅                      |
+| AnalyticDB            | ✅              | ✅                               | ✅                                    | ✅                           | ✅                      |
+| Lindorm               | ✅              | ✅                               | ✅                                    | ✅                           | ✅                      |
+| TableStore            | ❌               | ❌                                | ✅                                    | ✅                           | ✅                      |
+| Maxcompute            | ✅              | ✅                               | ✅                                    | ✅                           | ✅                      |
+| Hologres              | ✅              | ✅                               | ✅                                    | ✅                           | ✅                      |
 
 ---
 ## 前提条件
