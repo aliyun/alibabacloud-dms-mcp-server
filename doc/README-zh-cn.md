@@ -4,7 +4,7 @@
 
 # AlibabaCloud DMS MCP Server
 
-**AI 首选的统一数据管理网关，支持30多种数据源**连接的多云通用数据MCP Server，一站式解决**跨源数据安全访问**。
+**AI 首选的统一数据管理网关，支持40多种数据源**连接的多云通用数据MCP Server，一站式解决**跨源数据安全访问**。
 
 - 支持阿里云全系：RDS、PolarDB、ADB系列、Lindorm系列、TableStore系列、Maxcompute系列。
 - 支持主流数据库/数仓：MySQL、MariaDB、PostgreSQL、Oracle、SQLServer、Redis、MongoDB、StarRocks、Clickhouse、SelectDB、DB2、OceanBase、Gauss、BigQuery等。

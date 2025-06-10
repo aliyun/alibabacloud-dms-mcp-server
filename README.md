@@ -5,7 +5,7 @@
 
 # AlibabaCloud DMS MCP Server
 
-**AI-powered unified data management gateway** that supports connection to over 30+ data sources, serving as a multi-cloud universal data MCP Server to address cross-source data secure access in one-stop solution.
+**AI-powered unified data management gateway** that supports connection to over 40+ data sources, serving as a multi-cloud universal data MCP Server to address cross-source data secure access in one-stop solution.
 
 - Supports full Alibaba Cloud series: RDS, PolarDB, ADB series, Lindorm series, TableStore series, MaxCompute series.
 - Supports mainstream databases/warehouses: MySQL, MariaDB, PostgreSQL, Oracle, SQLServer, Redis, MongoDB, StarRocks, Clickhouse, SelectDB, DB2, OceanBase, Gauss, BigQuery, etc.
