@@ -42,6 +42,7 @@ DMS MCP Server currently supports two usage modes.
 You are a company DBA who needs to manage and access various types of database instances (e.g., MySQL, Oracle, PostgreSQL) in production, test, and development environments. With DMS MCP Server, you can achieve unified access and centralized management of these heterogeneous databases.  
 
 **Typical Question Examples:**  
+- Which of my instances are in the production environment?
 - Get a list of all databases named `test`.  
 - Retrieve details of the `test_db` database from the `myHost:myPort` instance.  
 - What tables are in the `test_db` database?  

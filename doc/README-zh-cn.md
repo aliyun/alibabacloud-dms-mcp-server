@@ -40,6 +40,7 @@ DMS MCP Server 现在支持两种使用模式。
 你是公司的DBA，需要在生产、测试和开发等多个环境中管理和访问 MySQL、Oracle 和 PostgreSQL 等多种数据库实例。通过DMS MCP Server，可以实现对这些异构数据库的统一接入与集中管理。
 
 **典型提问示例：**  
+- 我有哪些生产环境的实例？
 - 获取所有名称为test的数据库列表
 - 获取 myHost:myPort 实例中 test_db 数据库的详细信息。
 - test_db 数据库下有哪些表？ 
