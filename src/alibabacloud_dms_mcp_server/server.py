@@ -221,10 +221,10 @@ async def get_instance(
 
 
 async def list_instance(
-        search_key: Optional[str] = Field(default=None, description="Optional search key"),
-        db_type: Optional[str] = Field(default=None, description="Optional dbType (e.g., mysql, polardb, oracle, "
+        search_key: Optional[str] = Field(default=None, description="Optional search key (e.g., instance host, instance alias, etc.)"),
+        db_type: Optional[str] = Field(default=None, description="Optional instanceType, or called dbType (e.g., mysql, polardb, oracle, "
                                                                  "postgresql, sqlserver, polardb-pg, etc.)"),
-        env_type: Optional[str] = Field(default=None, description="Optional EnvType (e.g., product, dev, test, etc.)")
+        env_type: Optional[str] = Field(default=None, description="Optional Instance EnvType (e.g., product, dev, test, etc.)")
 ) -> List[InstanceDetail]:
     client = create_client()
     req = dms_enterprise_20181101_models.ListInstancesRequest()

@@ -65,20 +65,21 @@ Afterward, every time the service starts, the DMS MCP Server will directly acces
 
 ---
 ## Tool List  
-| Tool Name           | Description                                  | Applicable Mode                |
-|---------------------|---------------------------------------------|-------------------------------|
-| addInstance         | Adds an instance to DMS. If the instance already exists, it returns its information.  | Multi-instance Mode            |
-| getInstance         | Retrieves detailed information about an instance based on host and port.   | Multi-instance Mode            |
-| searchDatabase      | Searches databases based on schemaName.     | Multi-instance Mode            |
-| getDatabase         | Retrieves detailed information about a specific database.            | Multi-instance Mode            |
-| listTable           | Lists tables under a specified database.    | Multi-instance Mode & Single Database Mode |
-| getTableDetailInfo  | Retrieves detailed information about a specific table.        | Multi-instance Mode & Single Database Mode |
-| executeScript       | Executes an SQL script and returns the result.            | Multi-instance Mode & Single Database Mode |
-| nl2sql              | Converts natural language questions into SQL queries.      | Multi-instance Mode            |
-| askDatabase         | Natural language querying of a database (NL2SQL + execute SQL). | Single Database Mode           |
-| configureDtsJob     | Configures a DTS migration task                      | Multi-instance Mode            |
-| startDtsJob         | Starts a DTS migration task                          | Multi-instance Mode            |
-| getDtsJob           | Views details of a DTS migration task                | Multi-instance Mode            |
+| Tool Name          | Description                                                                                                               | Applicable Mode                |
+|--------------------|---------------------------------------------------------------------------------------------------------------------------|-------------------------------|
+| addInstance        | Adds an instance to DMS. Only Aliyun instances are supported. | Multi-instance Mode            |
+| listInstances      | Search for instances from DMS.                                                                                            | Multi-instance Mode            |
+| getInstance        | Retrieves detailed information about an instance based on host and port.                                                  | Multi-instance Mode            |
+| searchDatabase     | Searches databases based on schemaName.                                                                                   | Multi-instance Mode            |
+| getDatabase        | Retrieves detailed information about a specific database.                                                                 | Multi-instance Mode            |
+| listTable          | Lists tables under a specified database.                                                                                  | Multi-instance Mode & Single Database Mode |
+| getTableDetailInfo | Retrieves detailed information about a specific table.                                                                    | Multi-instance Mode & Single Database Mode |
+| executeScript      | Executes an SQL script and returns the result.                                                                            | Multi-instance Mode & Single Database Mode |
+| nl2sql             | Converts natural language questions into SQL queries.                                                                     | Multi-instance Mode            |
+| askDatabase        | Natural language querying of a database (NL2SQL + execute SQL).                                                           | Single Database Mode           |
+| configureDtsJob    | Configures a DTS migration task                                                                                           | Multi-instance Mode            |
+| startDtsJob        | Starts a DTS migration task                                                                                               | Multi-instance Mode            |
+| getDtsJob          | Views details of a DTS migration task                                                                                     | Multi-instance Mode            |
 
 <p> For a full list of tools, please refer to: <a href="/doc/Tool-List-en.md">Tool List</a><br></p>
 
