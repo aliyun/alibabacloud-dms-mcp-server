@@ -628,11 +628,11 @@ class ToolRegistry:
                       annotations={"title": "获取DMS数据库详情", "readOnlyHint": True})(get_database)
         self.mcp.tool(name="listTables",
                       description="Search for tables by databaseId and (optional) table name. "
-                                  "If you don't know the databaseId, first use get_database or search_database to retrieve it."
-                                  "(1)If you have the exact host, port, and database name, use get_database."
-                                  "(2)If you only know the database name, use search_database."
+                                  "If you don't know the databaseId, first use getDatabase or searchDatabase to retrieve it."
+                                  "(1)If you have the exact host, port, and database name, use getDatabase."
+                                  "(2)If you only know the database name, use searchDatabase."
                                   "(3)If you don't know any information, ask the user to provide the necessary details."
-                                  "Note: search_database may return multiple databases. In this case, let the user choose which one to use.",
+                                  "Note: searchDatabase may return multiple databases. In this case, let the user choose which one to use.",
                       annotations={"title": "列出DMS表", "readOnlyHint": True})(list_tables)
         self.mcp.tool(name="getTableDetailInfo",
                       description="Retrieve detailed metadata information about a specific database table including "
@@ -641,11 +641,11 @@ class ToolRegistry:
 
         @self.mcp.tool(name="executeScript",
                        description="Execute SQL script against a database in DMS and return structured results."
-                                   "If you don't know the databaseId, first use get_database or search_database to retrieve it."
-                                   "(1)If you have the exact host, port, and database name, use get_database."
-                                   "(2)If you only know the database name, use search_database."
+                                   "If you don't know the databaseId, first use getDatabase or searchDatabase to retrieve it."
+                                   "(1)If you have the exact host, port, and database name, use getDatabase."
+                                   "(2)If you only know the database name, use searchDatabase."
                                    "(3)If you don't know any information, ask the user to provide the necessary details."
-                                   "Note: search_database may return multiple databases. In this case, let the user choose which one to use.",
+                                   "Note: searchDatabase may return multiple databases. In this case, let the user choose which one to use.",
                        annotations={"title": "在DMS中执行SQL脚本", "readOnlyHint": False, "destructiveHint": True})
         async def execute_script_full_wrapper(
                 database_id: str = Field(description="Required DMS databaseId. Obtained via getDatabase tool"),
