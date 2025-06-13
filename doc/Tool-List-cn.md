@@ -1,6 +1,6 @@
 
 ### 元数据相关
-#### addInstance：将实例添加到 DMS。如果实例已存在，则返回已有实例信息。
+#### addInstance：将阿里云实例添加到 DMS。
 
 - **db_user** (字符串, 必需): 用于连接数据库的用户名。
 - **db_password** (字符串, 必需): 用于连接数据库的密码。
@@ -8,6 +8,12 @@
 - **host** (字符串, 可选): 实例的连接地址。
 - **port** (字符串, 可选): 实例的连接端口号。
 - **region** (字符串, 可选): 实例所在的区域（例如 "cn-hangzhou"）。
+
+#### listInstances：搜索DMS中的实例列表。
+
+- **search_key** (字符串, 可选): 搜索关键词，例如实例地址、实例别名等。
+- **db_type** (字符串, 可选): 数据库类型，例如mysql、oracle、postgresql等。
+- **env_type** (字符串, 可选): 实例环境类型，例如product（生产）、dev（开发）、test（测试）等。
 
 #### getInstance：根据 host 和 port 信息从 DMS 中获取实例详细信息。
 
@@ -31,7 +37,7 @@
 #### listTable：根据 databaseId 和 tableName 在 DMS 中搜索数据表。
 
 - **database_id** (字符串, 必需): 用于限定搜索范围的数据库 ID（可通过 getDatabase 工具获取）。
-- **search_name** (字符串, 必需): 作为搜索关键词的非空字符串，用于匹配表名。
+- **search_name** (字符串, 可选): 作为搜索关键词的字符串，用于匹配表名。
 - **page_number** (整数, 可选): 分页页码（默认：1）。
 - **page_size** (整数, 可选): 每页结果数量（默认：200，最大：200）。
 

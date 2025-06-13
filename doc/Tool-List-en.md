@@ -10,6 +10,12 @@
 - **port** (string, optional): Connection port number of the instance.
 - **region** (string, optional): Region where the instance is located (e.g., "cn-hangzhou").
 
+#### listInstances：Search for instances from DMS.    
+
+- **search_key** (string, optional): Search key (e.g., instance host, instance alias, etc.)
+- **db_type** (string, optional): InstanceType, or called dbType (e.g., mysql, polardb, oracle, postgresql, sqlserver, polardb-pg, etc.)
+- **env_type** (string, optional):  Instance EnvType (e.g., product, dev, test, etc.)
+
 #### getInstance: Retrieve instance details from DMS based on host and port information.
 
 - **host** (string, required): Connection address of the instance.
@@ -32,7 +38,7 @@
 #### listTable: Search for data tables in DMS based on databaseId and tableName.
 
 - **database_id** (string, required): Database ID to limit the search scope (obtained via getDatabase).
-- **search_name** (string, required): Non-empty string as a search keyword to match table names.
+- **search_name** (string, optional): String as a search keyword to match table names.
 - **page_number** (integer, optional): Pagination page number (default: 1).
 - **page_size** (integer, optional): Number of results per page (default: 200, maximum: 200).
 
