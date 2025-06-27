@@ -5,30 +5,38 @@
 
 # AlibabaCloud DMS MCP Server
 
-**AI-powered unified data management gateway** that supports connection to over 40+ data sources, serving as a multi-cloud universal data MCP Server to address cross-source data secure access in one-stop solution.
-
-- Supports full Alibaba Cloud series: RDS, PolarDB, ADB series, Lindorm series, TableStore series, MaxCompute series.
-- Supports mainstream databases/warehouses: MySQL, MariaDB, PostgreSQL, Oracle, SQLServer, Redis, MongoDB, StarRocks, Clickhouse, SelectDB, DB2, OceanBase, Gauss, BigQuery, etc.
-
-<img src="images/architecture-0508.jpg" alt="Architecture" width="60%">
-
-[//]: # (<img src="https://dms-static.oss-cn-hangzhou.aliyuncs.com/mcp-readme/architecture-0508.jpg" alt="Architecture" width="60%">)
-
+**AI-Era Data Security Access Gateway ｜Intelligent Data Query Engine｜Supports 40+ Data Sources**
 
 ---
 
 ## Core Features
-Provides AI with a unified **data access layer** and **metadata access layer**, solving through standardized interfaces:
-- Maintenance costs caused by data source fragmentation
-- Compatibility issues between heterogeneous protocols
-- Security risks from uncontrolled account permissions and non-auditable operations
+**Secure Access**
+- **Account and Password Security Management**：Safely manage database account passwords without manual maintenance, effectively preventing sensitive information leakage.
+- **Fine-grained Permission Control**：Supports instance, database, table, field, and row-level access control, precisely restricting caller permissions to prevent unauthorized operations and ensure data security.
+- **High-risk SQL Identification and Blocking**: Built-in rich rule engine that identifies and blocks potential high-risk SQL in real time to mitigate security risks.
+- **SQL Audit Trail**: Records all SQL operation logs, supporting full traceability and compliance audits to meet regulatory requirements.
 
-Key features via MCP include:
-- **NL2SQL**: Execute SQL via natural language to obtain data results
-- **Code Generation**: Retrieve schema information through this service to generate DAO code or perform structural analysis
-- **Data Retrieval**: Automatically route SQL to accurate data sources for business support
-- **Security**: Fine-grained access control and auditability
-- **Data Migration**: Configure data migration tasks
+**Intelligent Data Inquiry**
+- **Built-in NL2SQL Algorithm**: Based on natural language input questions, it intelligently matches data tables, understands business semantics within tables, generates and executes SQL queries, and quickly obtains results.
+- **Personalized Knowledge Base**: Built-in metadata and [knowledge base](https://help.aliyun.com/zh/dms/knowledge-base-management?) for data inquiry, supports custom business knowledge and query patterns to build tailored intelligent data inquiry capabilities aligned with business scenarios.
+
+**Multi-data Source Support**
+- **Wide Range of Data Source Support**: Supports over 40 mainstream databases/data warehouses, enabling unified access and integration from multiple sources.
+- **Unified Management Across Environments**: Supports centralized management of database instances across development, testing, and production environments to improve operational efficiency.
+- **Seamless Integration Across Platforms**: Covers major cloud platforms such as Alibaba Cloud and AWS, as well as self-built databases/data warehouses, effectively reducing maintenance costs.
+
+---
+
+## Supported Ecosystem
+- Supports all Alibaba Cloud data sources: RDS, PolarDB, ADB series, Lindorm series, TableStore series, Maxcompute series.
+- Supports mainstream databases/data warehouses: MySQL, MariaDB, PostgreSQL, Oracle, SQLServer, Redis, MongoDB, StarRocks, Clickhouse, SelectDB, DB2, OceanBase, Gauss, BigQuery, etc.
+---
+
+## Core Architecture
+<img src="images/architecture-0508.jpg" alt="Architecture" width="60%">
+
+[//]: # (<img src="https://dms-static.oss-cn-hangzhou.aliyuncs.com/mcp-readme/architecture-0508.jpg" alt="Architecture" width="60%">)
+
 
 ---
 
@@ -42,6 +50,7 @@ DMS MCP Server currently supports two usage modes.
 You are a company DBA who needs to manage and access various types of database instances (e.g., MySQL, Oracle, PostgreSQL) in production, test, and development environments. With DMS MCP Server, you can achieve unified access and centralized management of these heterogeneous databases.  
 
 **Typical Question Examples:**  
+- Which of my instances are in the production environment?
 - Get a list of all databases named `test`.  
 - Retrieve details of the `test_db` database from the `myHost:myPort` instance.  
 - What tables are in the `test_db` database?  
@@ -50,7 +59,7 @@ You are a company DBA who needs to manage and access various types of database i
 ### Mode Two: Single Database Mode  
 - Directly specify the target database by configuring the `CONNECTION_STRING` parameter in the server (format: `dbName@host:port`).  
 - Suitable for scenarios that focus on accessing a single database.  
-#### Scenario Example:  
+#### Scenario Example 1:  
 You are a developer who frequently accesses a fixed database (e.g., `mydb@192.168.1.100:3306`) for development and testing. Set the `CONNECTION_STRING` parameter in the DMS MCP Server configuration as follows:  
 ```ini
 CONNECTION_STRING = mydb@192.168.1.100:3306
@@ -62,6 +71,21 @@ Afterward, every time the service starts, the DMS MCP Server will directly acces
 - Show the field structure of the `test_table` table.  
 - Retrieve the first 20 rows from the `test_table` table.  
 - Use a tool to answer: "What is today's user traffic?"
+
+#### Scenario Example 2:
+You are a data analyst at an e-commerce company, needing to frequently query and analyze business data such as orders, users, and products. The company's core business database is located at ecommerce@10.20.30.40:3306.
+
+Configure the following parameters in DMS MCP Server:
+```ini
+CONNECTION_STRING = ecommerce@10.20.30.40:3306
+```
+Simply ask questions in natural language, and DMS MCP will parse the question into SQL and return the results.
+
+**Typical Question Examples:**
+- What is the total number of orders today?
+- How are the order counts ranked by province?
+- What is the number of new users each day over the past 7 days?
+- Which product category has the highest sales revenue?
 
 ---
 ## Tool List  
@@ -114,9 +138,9 @@ Afterward, every time the service starts, the DMS MCP Server will directly acces
 
 ---
 ## Prerequisites  
-- uv is installed  
+- [uv](https://docs.astral.sh/uv/getting-started/installation/) is installed  
 - Python 3.10+ is installed  
-- An AK/SK or STS Token with access rights to Alibaba Cloud DMS(AliyunDMSFullAccess)
+- An [AK/SK](https://www.alibabacloud.com/help/en/doc-detail/116811.html) or [STS Token](https://www.alibabacloud.com/help/en/ram/product-overview/what-is-sts) with access rights to Alibaba Cloud DMS(AliyunDMSFullAccess).Add permission operations, see [Authorization Management](https://www.alibabacloud.com/help/en/ram/user-guide/authorization-management/).
 
 ---
 ## Pre-configuration  
