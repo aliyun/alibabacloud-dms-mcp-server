@@ -4,40 +4,51 @@
 
 # AlibabaCloud DMS MCP Server
 
-**AI 首选的统一数据管理网关，支持40多种数据源**连接的多云通用数据MCP Server，一站式解决**跨源数据安全访问**。
+**AI时代的数据安全访问网关 ｜智能问数引擎 ｜ 支持40+数据源**
 
-- 支持阿里云全系：RDS、PolarDB、ADB系列、Lindorm系列、TableStore系列、Maxcompute系列。
+---
+
+## 核心特性
+**安全访问**
+- **账号密码安全托管**：安全管理数据库账号密码，无需人工维护，有效防止敏感信息泄露。
+- **细粒度权限管控**：支持实例、库、表、字段及行级别的精细化访问控制，精准限制调用方权限，杜绝越权操作，保障数据安全。
+- **高危SQL识别与拦截**：内置丰富的规则引擎，实时识别并拦截潜在高危SQL，防范安全风险。
+- **SQL审计追踪**：记录所有SQL操作日志，支持完整追溯与合规审计，满足监管要求。
+
+**智能问数**
+- **内置NL2SQL算法**：基于输入的自然语言问题，智能匹配数据表，理解表中业务含义，生成并执行SQL查询，快速获取结果。
+- **个性化知识库**：内置元数据和问数[知识库](https://help.aliyun.com/zh/dms/knowledge-base-management?)，支持自定义业务知识和查询模式，打造贴合业务场景的专属智能问数能力。
+
+**多数据源支持**
+- **广泛数据源支持**：支持40多种主流数据库/数仓类型，实现多源数据统一接入和访问。
+- **多环境统一管理**：支持开发、测试、生产等不同环境下的数据库实例集中管理，提升运维效率。
+- **多平台无缝集成**：覆盖阿里云、AWS等主流云平台以及自建数据库/数仓，有效降低维护成本。
+
+
+---
+
+## 支持生态
+
+- 支持阿里云全系数据源：RDS、PolarDB、ADB系列、Lindorm系列、TableStore系列、Maxcompute系列。
 - 支持主流数据库/数仓：MySQL、MariaDB、PostgreSQL、Oracle、SQLServer、Redis、MongoDB、StarRocks、Clickhouse、SelectDB、DB2、OceanBase、Gauss、BigQuery等。
 
+---
+
+## 核心架构
 <img src="../images/architecture-0508.jpg" alt="Architecture" width="60%">
 
 [//]: # (<img src="https://dms-static.oss-cn-hangzhou.aliyuncs.com/mcp-readme/architecture-0508.jpg" alt="Architecture" width="60%">)
 
 
 ---
-
-## 核心特性
-为大模型提供统一的**数据接入层**与**元数据访问层**，通过标准化接口解决：  
-- 数据源碎片化导致的MCP Server维护成本  
-- 异构协议间的兼容性问题  
-- 账号权限不受控、操作无审计带来的安全问题  
-
-同时，通过MCP将获得以下特性：  
-- **NL2SQL**：通过自然语言执行SQL，获得数据结果  
-- **代码生成**：通过该服务获取schema信息，生成DAO代码或进行结构分析  
-- **取数**：通过SQL自动路由准确数据源获得数据，为上层业务提供数据支持  
-- **安全**：精细的访问控制和可审计性 
-- **数据迁移**：配置数据迁移任务
-
----
 ## 使用方式
-DMS MCP Server 现在支持两种使用模式。
+DMS MCP Server 支持两种使用模式。
 
 ### 模式一：多实例模式
 - 支持添加实例到DMS，可以访问多个数据库实例。
 - 适用于需要管理和访问多个数据库实例的场景。
 #### 场景示例：
-你是公司的DBA，需要在生产、测试和开发等多个环境中管理和访问 MySQL、Oracle 和 PostgreSQL 等多种数据库实例。通过DMS MCP Server，可以实现对这些异构数据库的统一接入与集中管理。
+你是公司的DBA，需要在生产、测试和开发等多个环境中管理和访问 MySQL、Oracle 和 PostgreSQL 等多种数据库实例。通过DMS MCP Server，可以实现对这些异构数据源的统一接入与集中管理。
 
 **典型提问示例：**  
 - 我有哪些生产环境的实例？
@@ -50,7 +61,7 @@ DMS MCP Server 现在支持两种使用模式。
 ### 模式二：单数据库模式
 - 通过在SERVER中配置 CONNECTION_STRING 参数（格式为 dbName@host:port），直接指定需要访问的数据库。
 - 适用于专注一个数据库访问的场景。
-#### 场景示例：
+#### 场景示例1：
 你是一个开发人员，只需要频繁访问一个固定的数据库（如 mydb@192.168.1.100:3306）进行开发测试。在 DMS MCP Server 的配置中设置一个 CONNECTION_STRING 参数，例如：
 ```ini
 CONNECTION_STRING = mydb@192.168.1.100:3306
@@ -62,6 +73,24 @@ CONNECTION_STRING = mydb@192.168.1.100:3306
 - 查看test_table 表的字段结构
 - 获取test_table 表的前20条数据
 - 使用工具，回答“今天的用户访问量是多少？”
+
+
+#### 场景示例2：
+你是一家电商公司的数据分析师，需要频繁查询和分析订单、用户、商品等业务数据。公司的核心业务数据库位于 ecommerce@10.20.30.40:3306。
+
+在DMS MCP Server中设置如下参数：
+```ini
+CONNECTION_STRING = ecommerce@10.20.30.40:3306
+```
+
+只需用自然语言提问，DMS MCP 即可将问题解析为 SQL 并返回结果。
+
+
+**典型提问示例：** 
+- 今天的订单总数是多少？
+- 各个省份的订单数量排名如何？
+- 过去7天内，每天的新增用户数是多少？
+- 哪个商品类别的销售额最高？
 
 ---
 
@@ -113,13 +142,13 @@ CONNECTION_STRING = mydb@192.168.1.100:3306
 
 ---
 ## 前提条件
-- 已安装uv
+- 已安装[uv](https://docs.astral.sh/uv/getting-started/installation/)
 - 已安装Python 3.10+
-- 具有阿里云DMS访问权限(AliyunDMSFullAccess)的AK SK或者STS Token
+- 具有阿里云DMS访问权限(AliyunDMSFullAccess)的[AK SK](https://help.aliyun.com/zh/ram/user-guide/view-the-accesskey-pairs-of-a-ram-user)或者[STS Token](https://help.aliyun.com/zh/ram/product-overview/what-is-sts)，添加权限操作，请参见[授权管理](https://help.aliyun.com/zh/ram/user-guide/authorization-management/)
 
 ---
 ## 准备工作
-在通过DMS MCP访问托管在DMS的数据库实例之前，需要将对应的数据库实例录入至DMS中，并为实例开启 [安全托管](https://help.aliyun.com/zh/dms/product-overview/security-hosting)。
+在通过DMS MCP访问托管在DMS的数据源之前，需要将对应的数据源录入至DMS中，并为实例开启 [安全托管](https://help.aliyun.com/zh/dms/product-overview/security-hosting)。
 
 可以通过以下两种方式进行实例的添加：
 
