@@ -46,24 +46,35 @@ g_reserved = '''{
 }
 '''
 
+
 # --- Pydantic Models ---
 class MyBaseModel(BaseModel):
     model_config = ConfigDict(json_dumps_params={'ensure_ascii': False})
 
+
 class AskDatabaseResult(MyBaseModel):
     executed_sql: str = Field(description="The SQL query that was executed.")
     execution_result: str = Field(description="The result of the SQL query execution.")
+
 
 class InstanceInfo(MyBaseModel):
     instance_id: Any = Field(description="Unique instance identifier in DMS", default=None)
     host: Any = Field(description="The hostname of the database instance", default=None)
     port: Any = Field(description="The connection port number", default=None)
 
+
 class InstanceDetail(MyBaseModel):
     InstanceId: Any = Field(description="Unique instance identifier in DMS", default=None)
     State: Any = Field(description="Current operational status", default=None)
     InstanceType: Any = Field(description="Database Engine type", default=None)
     InstanceAlias: Any = Field(description="Instance alias in DMS", default=None)
+    EnvType: Any = Field(description="The environment type of the instance (e.g., production, development, etc.)",
+                         default=None)
+    Host: Any = Field(description="The hostname of the database instance", default=None)
+    Port: Any = Field(description="The connection port number", default=None)
+    InstanceSource: Any = Field(description="The instance source (e.g., RDS, VPC_IDC, ECS_OWN, PUBLIC_OWN etc.)",
+                                default=None)
+
 
 class DatabaseInfo(MyBaseModel):
     DatabaseId: Any = Field(description="Unique database identifier in DMS")
@@ -71,6 +82,7 @@ class DatabaseInfo(MyBaseModel):
     Port: Any = Field(description="Connection port number")
     DbType: Any = Field(description="Database Engine type")
     SchemaName: Any = Field(description="Name of the database schema")
+
 
 class DatabaseDetail(MyBaseModel):
     DatabaseId: Any = Field(description="Unique database identifier in DMS", default=None)
@@ -80,6 +92,7 @@ class DatabaseDetail(MyBaseModel):
     InstanceId: Any = Field(description="Instance identifier in DMS", default=None)
     State: Any = Field(description="Current operational status", default=None)
 
+
 class Column(MyBaseModel):
     ColumnName: Any = Field(description="Name of the column")
     ColumnType: Any = Field(description="Full SQL type declaration (e.g., 'varchar(32)', 'bigint(20)')")
@@ -87,15 +100,18 @@ class Column(MyBaseModel):
     Description: Any = Field(description="Column comment/description text")
     Nullable: Any = Field(description="Whether NULL values are allowed")
 
+
 class Index(MyBaseModel):
     IndexColumns: Any = Field(description="List of column names included in the index")
     IndexName: Any = Field(description="Name of the index")
     IndexType: Any = Field(description="Type of index ('Primary', 'Unique', etc.)")
     Unique: Any = Field(description="Whether the index enforces uniqueness")
 
+
 class TableDetail(MyBaseModel):
     ColumnList: Any = Field(description="List of column metadata", default=None)
     IndexList: Any = Field(description="List of index metadata", default=None)
+
 
 class ResultSet(MyBaseModel):
     ColumnNames: List[str] = Field(description="Ordered list of column names")
@@ -125,20 +141,23 @@ class ExecuteScriptResult(MyBaseModel):
         else:
             return "Script executed successfully, but no results were returned."
 
+
 class SqlResult(MyBaseModel):
     sql: Optional[str] = Field(description="The generated SQL query")
+
 
 # --- Aliyun Client Creation ---
 def create_client() -> dms_enterprise20181101Client:
     config = open_api_models.Config(
-        access_key_id=os.getenv('ALIBABA_CLOUD_ACCESS_KEY_ID', ""),
-        access_key_secret=os.getenv('ALIBABA_CLOUD_ACCESS_KEY_SECRET', ""),
+        access_key_id=os.getenv('ALIBABA_CLOUD_ACCESS_KEY_ID'),
+        access_key_secret=os.getenv('ALIBABA_CLOUD_ACCESS_KEY_SECRET'),
         security_token=os.getenv('ALIBABA_CLOUD_SECURITY_TOKEN'),
-        read_timeout=60*1000  # 设置读取超时时间为60秒
+        read_timeout=60 * 1000  # 设置读取超时时间为60秒
     )
     config.endpoint = f'dms-enterprise.cn-hangzhou.aliyuncs.com'
     config.user_agent = "dms-mcp"
     return dms_enterprise20181101Client(config)
+
 
 def get_dts_client(region_id: str):
     config = Config(
@@ -153,10 +172,11 @@ def get_dts_client(region_id: str):
     client = DtsClient(config)
     return client
 
+
 async def add_instance(
         db_user: str = Field(description="The username used to connect to the database"),
         db_password: str = Field(description="The password used to connect to the database"),
-        instance_resource_id: Optional[str] = Field(default=None, description="The resource id of the instance"),
+        instance_resource_id: Optional[str] = Field(default=None, description="Aliyun instance resource ID"),
         host: Optional[str] = Field(default=None, description="The hostname of the database instance"),
         port: Optional[str] = Field(default=None, description="The connection port number"),
         region: Optional[str] = Field(default=None, description="The region (e.g., 'cn-hangzhou')")
@@ -167,16 +187,21 @@ async def add_instance(
         raise ValueError("db_password must be a non-empty string")
     client = create_client()
     req = dms_enterprise_20181101_models.SimplyAddInstanceRequest(database_user=db_user, database_password=db_password)
-    if host: req.host = host
-    if port: req.port = port
-    if instance_resource_id: req.instance_id = instance_resource_id
-    if region: req.region = region
+    if host:
+        req.host = host
+    if port:
+        req.port = port
+    if instance_resource_id:
+        req.instance_id = instance_resource_id
+    if region:
+        req.region = region
     try:
         resp = client.simply_add_instance(req)
         return InstanceInfo(**resp.body.to_map()) if resp and resp.body else InstanceInfo()
     except Exception as e:
         logger.error(f"Error in add_instance: {e}")
         raise
+
 
 async def get_instance(
         host: str = Field(description="The hostname of the database instance"),
@@ -193,6 +218,41 @@ async def get_instance(
     except Exception as e:
         logger.error(f"Error in get_instance: {e}")
         raise
+
+
+async def list_instance(
+        search_key: Optional[str] = Field(default=None, description="Optional search key (e.g., instance host, instance alias, etc.)"),
+        db_type: Optional[str] = Field(default=None, description="Optional instanceType, or called dbType (e.g., mysql, polardb, oracle, "
+                                                                 "postgresql, sqlserver, polardb-pg, etc.)"),
+        env_type: Optional[str] = Field(default=None, description="Optional instance environment type (e.g., product, dev, test, etc. )")
+) -> List[InstanceDetail]:
+    client = create_client()
+    req = dms_enterprise_20181101_models.ListInstancesRequest()
+    if search_key:
+        req.search_key = search_key
+    if db_type:
+        req.db_type = db_type
+    if env_type:
+        req.env_type = env_type
+    try:
+        resp = client.list_instances(req)
+
+        instance_data = resp.body.to_map()
+        if "InstanceList" not in instance_data:
+            return []
+        instance_list = instance_data["InstanceList"]
+        # 检查是否有 Instance 键
+        if "Instance" not in instance_list:
+            return []
+        instances = instance_list["Instance"]
+        # 检查是否为空
+        if not isinstance(instances, list) or not instances:
+            return []
+        return [InstanceDetail(**item) for item in instances]
+    except Exception as e:
+        logger.error(f"Error in list_instance: {e}")
+        raise
+
 
 async def search_database(
         search_key: str = Field(description="database name to search for"),
@@ -218,6 +278,7 @@ async def search_database(
         logger.error(f"Error in search_database: {e}")
         raise
 
+
 async def get_database(
         host: str = Field(description="Hostname or IP of the database instance"),
         port: str = Field(description="Connection port number"),
@@ -235,9 +296,10 @@ async def get_database(
         logger.error(f"Error in get_database: {e}")
         raise
 
+
 async def list_tables(  # Renamed from listTable to follow convention
         database_id: str = Field(description="DMS databaseId"),
-        search_name: Optional[str] = Field(description="Optional: Search keyword for table names"),
+        search_name: Optional[str] = Field(default=None, description="Optional: Search keyword for table names"),
         page_number: int = Field(default=1, description="Pagination page number"),
         page_size: int = Field(default=200, description="Results per page (max 200)")
 ) -> Dict[str, Any]:
@@ -254,8 +316,10 @@ async def list_tables(  # Renamed from listTable to follow convention
         logger.error(f"Error in list_tables: {e}")
         raise
 
+
 async def get_meta_table_detail_info(
-        table_guid: str = Field(description="Unique table identifier (format: dmsTableId.schemaName.tableName),Example: IDB_1567890.mySchema.myTable")
+        table_guid: str = Field(
+            description="Unique table identifier (format: dmsTableId.schemaName.tableName),Example: IDB_1567890.mySchema.myTable")
 ) -> TableDetail:
     client = create_client()
     req = dms_enterprise_20181101_models.GetMetaTableDetailInfoRequest(table_guid=table_guid)
@@ -267,6 +331,7 @@ async def get_meta_table_detail_info(
         logger.error(f"Error in get_meta_table_detail_info: {e}")
         raise
 
+
 def _format_as_markdown_table(column_names: List[str], rows: List[Dict[str, Any]]) -> str:
     if not column_names: return ""
     header = "| " + " | ".join(column_names) + " |"
@@ -276,6 +341,7 @@ def _format_as_markdown_table(column_names: List[str], rows: List[Dict[str, Any]
         row_values = [str(row_data.get(col, "")) for col in column_names]
         table_rows_str.append("| " + " | ".join(row_values) + " |")
     return "\n".join(table_rows_str)
+
 
 async def execute_script(
         database_id: str = Field(description="DMS databaseId"),
@@ -301,13 +367,15 @@ async def execute_script(
                                   MarkdownTable=markdown_table, Success=True, Message=''))
                 else:
                     processed_results.append(
-                        ResultSet(ColumnNames=[], RowCount=0, Rows=[], MarkdownTable=None, Success=False, Message=res_item.get('Message')))
+                        ResultSet(ColumnNames=[], RowCount=0, Rows=[], MarkdownTable=None, Success=False,
+                                  Message=res_item.get('Message')))
         return ExecuteScriptResult(RequestId=data.get('RequestId', ""), Results=processed_results,
                                    Success=data.get('Success', False))
     except Exception as e:
         logger.error(f"Error in execute_script: {e}")
         if "The instance is not in secure hosting mode" in str(e):
             return "当前实例尚未开启安全托管功能。您可以通过DMS控制台免费开启「安全托管模式」。请注意，该操作需要管理员或DBA身份权限。"
+
 
 async def nl2sql(
         database_id: str = Field(description="DMS databaseId"),
@@ -327,22 +395,30 @@ async def nl2sql(
         logger.error(f"Error in nl2sql_explicit_db: {e}")
         raise
 
+
 async def configureDtsJob(
         region_id: str = Field(description="The region id of the dts job (e.g., 'cn-hangzhou')"),
-        job_type: str = Field(description="The type of job (synchronization job: SYNC, migration job: MIGRATION, data check job: CHECK)"),
+        job_type: str = Field(
+            description="The type of job (synchronization job: SYNC, migration job: MIGRATION, data check job: CHECK)"),
         source_endpoint_region: str = Field(description="The source endpoint region ID"),
-        source_endpoint_instance_type: str = Field(description="The source endpoint instance type (RDS, ECS, EXPRESS, CEN, DG)"),
-        source_endpoint_engine_name: str = Field(description="The source endpoint engine name (MySQL, PostgreSQL, SQLServer)"),
+        source_endpoint_instance_type: str = Field(
+            description="The source endpoint instance type (RDS, ECS, EXPRESS, CEN, DG)"),
+        source_endpoint_engine_name: str = Field(
+            description="The source endpoint engine name (MySQL, PostgreSQL, SQLServer)"),
         source_endpoint_instance_id: str = Field(description="The source endpoint instance ID (e.g., 'rm-xxx')"),
         source_endpoint_user_name: str = Field(description="The source endpoint user name"),
         source_endpoint_password: str = Field(description="The source endpoint password"),
         destination_endpoint_region: str = Field(description="The destination endpoint region ID"),
-        destination_endpoint_instance_type: str = Field(description="The destination endpoint instance type (RDS, ECS, EXPRESS, CEN, DG)"),
-        destination_endpoint_engine_name: str = Field(description="The destination endpoint engine name (MySQL, PostgreSQL, SQLServer)"),
-        destination_endpoint_instance_id: str = Field(description="The destination endpoint instance ID (e.g., 'rm-xxx')"),
+        destination_endpoint_instance_type: str = Field(
+            description="The destination endpoint instance type (RDS, ECS, EXPRESS, CEN, DG)"),
+        destination_endpoint_engine_name: str = Field(
+            description="The destination endpoint engine name (MySQL, PostgreSQL, SQLServer)"),
+        destination_endpoint_instance_id: str = Field(
+            description="The destination endpoint instance ID (e.g., 'rm-xxx')"),
         destination_endpoint_user_name: str = Field(description="The destination endpoint user name"),
         destination_endpoint_password: str = Field(description="The destination endpoint password"),
-        db_list: Dict[str, Any] = Field(description='The database objects in JSON format, example 1: migration dtstest database, db_list should like {"dtstest":{"name":"dtstest","all":true}}; example 2: migration one table task01 in dtstest database, db_list should like {"dtstest":{"name":"dtstest","all":false,"Table":{"task01":{"name":"task01","all":true}}}}; example 3: migration two tables task01 and task02 in dtstest database, db_list should like {"dtstest":{"name":"dtstest","all":false,"Table":{"task01":{"name":"task01","all":true},"task02":{"name":"task02","all":true}}}}')
+        db_list: Dict[str, Any] = Field(
+            description='The database objects in JSON format, example 1: migration dtstest database, db_list should like {"dtstest":{"name":"dtstest","all":true}}; example 2: migration one table task01 in dtstest database, db_list should like {"dtstest":{"name":"dtstest","all":false,"Table":{"task01":{"name":"task01","all":true}}}}; example 3: migration two tables task01 and task02 in dtstest database, db_list should like {"dtstest":{"name":"dtstest","all":false,"Table":{"task01":{"name":"task01","all":true},"task02":{"name":"task02","all":true}}}}')
 ) -> Dict[str, Any]:
     try:
         db_list_str = json.dumps(db_list, separators=(',', ':'))
@@ -405,13 +481,14 @@ async def configureDtsJob(
 
         if dts_job_id and len(dts_job_id) > 0:
             configure_dts_job_request.dts_job_id = dts_job_id
-            
+
         configure_dts_job_response = client.configure_dts_job_with_options(configure_dts_job_request, runtime)
         logger.info(f"Configure dts job response: {configure_dts_job_response.body.to_map()}")
         return configure_dts_job_response.body.to_map()
     except Exception as e:
         logger.error(f"Error occurred while configure dts job: {str(e)}")
         raise e
+
 
 async def startDtsJob(
         region_id: str = Field(description="The region id of the dts job (e.g., 'cn-hangzhou')"),
@@ -430,6 +507,7 @@ async def startDtsJob(
         logger.error(f"Error occurred while start dts job: {str(e)}")
         raise e
 
+
 async def getDtsJob(
         region_id: str = Field(description="The region id of the dts job (e.g., 'cn-hangzhou')"),
         dts_job_id: str = Field(description="The job id of the dts job")
@@ -446,6 +524,7 @@ async def getDtsJob(
     except Exception as e:
         logger.error(f"Error occurred while describe dts job detail: {str(e)}")
         raise e
+
 
 # --- ToolRegistry Class ---
 class ToolRegistry:
@@ -467,8 +546,8 @@ class ToolRegistry:
                        description="Lists tables in the database. Search by name is supported.",
                        annotations={"title": "List Tables (Pre-configured DB)", "readOnlyHint": True})
         async def list_tables_configured(
-                search_name: Optional[str] = Field(
-                    description="Optional: A string used as the search keyword to match table names."),
+                search_name: Optional[str] = Field(default=None,
+                                                   description="Optional: A string used as the search keyword to match table names."),
                 page_number: int = Field(description="Pagination page number", default=1),
                 page_size: int = Field(description="Number of results per page", default=200)
         ) -> Dict[str, Any]:
@@ -478,7 +557,8 @@ class ToolRegistry:
                                      page_number=page_number, page_size=page_size)
 
         self.mcp.tool(name="getTableDetailInfo",
-                      description="Retrieve detailed metadata information for a specific table using its GUID.",
+                      description="Retrieve detailed metadata information about a specific database table including "
+                                  "schema and index details. If you don't know the table_guid parameter, retrieve it using listTables.",
                       annotations={"title": "Get Table Details", "readOnlyHint": True})(get_meta_table_detail_info)
 
         @self.mcp.tool(name="executeScript",
@@ -519,9 +599,10 @@ class ToolRegistry:
                 logger.error(f"Error executing SQL for pre-configured DB: {e}")
                 return AskDatabaseResult(executed_sql=generated_sql,
                                          execution_result=f"Error: An issue occurred while executing the query: {str(e)}")
-            
+
         self.mcp.tool(name="configureDtsJob", description="Configure a dts job.",
-                      annotations={"title": "配置DTS任务", "readOnlyHint": False, "destructiveHint": True})(configureDtsJob)
+                      annotations={"title": "配置DTS任务", "readOnlyHint": False, "destructiveHint": True})(
+            configureDtsJob)
         self.mcp.tool(name="startDtsJob", description="Start a dts job.",
                       annotations={"title": "启动DTS任务", "readOnlyHint": False, "destructiveHint": True})(startDtsJob)
         self.mcp.tool(name="getDtsJob", description="Get a dts job detail information.",
@@ -529,26 +610,42 @@ class ToolRegistry:
 
     def _register_full_toolset(self):
         self.mcp.tool(name="addInstance",
-                      description="Add an instance to DMS. If the instance already exists, it will return the existing instance information.",
+                      description="Add an instance to DMS. The username and password are required. "
+                                  "Only Aliyun instances are supported. "
+                                  "Either instance_resource_id or host and port must be provided. "
+                                  "The region is optional, but it's recommended to include it."
+                                  "If the instance already exists, it will return the existing instance information.",
                       annotations={"title": "添加或获取DMS实例", "readOnlyHint": False, "destructiveHint": False})(
             add_instance)
-        self.mcp.tool(name="getInstance", description="Retrieve detailed instance information from DMS.",
+        self.mcp.tool(name="listInstances", description="Search for instances from DMS.",
+                      annotations={"title": "搜索DMS实例列表", "readOnlyHint": True})(list_instance)
+        self.mcp.tool(name="getInstance", description="Retrieve detailed instance information from DMS using the host and port.",
                       annotations={"title": "获取DMS实例详情", "readOnlyHint": True})(get_instance)
-        self.mcp.tool(name="searchDatabase", description="Search databases in DMS based on their name.",
+        self.mcp.tool(name="searchDatabase", description="Search databases in DMS by name.",
                       annotations={"title": "搜索DMS数据库", "readOnlyHint": True})(search_database)
         self.mcp.tool(name="getDatabase",
                       description="Obtain detailed information about a specific database in DMS when the host and port are provided.",
                       annotations={"title": "获取DMS数据库详情", "readOnlyHint": True})(get_database)
         self.mcp.tool(name="listTables",
-                      description="Search for database tables in DMS based on databaseId and tableName.",
+                      description="Search for tables by databaseId and (optional) table name. "
+                                  "If you don't know the databaseId, first use getDatabase or searchDatabase to retrieve it."
+                                  "(1)If you have the exact host, port, and database name, use getDatabase."
+                                  "(2)If you only know the database name, use searchDatabase."
+                                  "(3)If you don't know any information, ask the user to provide the necessary details."
+                                  "Note: searchDatabase may return multiple databases. In this case, let the user choose which one to use.",
                       annotations={"title": "列出DMS表", "readOnlyHint": True})(list_tables)
         self.mcp.tool(name="getTableDetailInfo",
                       description="Retrieve detailed metadata information about a specific database table including "
-                                  "schema and index details.",
+                                  "schema and index details. If you don't know the table_guid parameter, retrieve it using listTables.",
                       annotations={"title": "获取DMS表详细信息", "readOnlyHint": True})(get_meta_table_detail_info)
 
         @self.mcp.tool(name="executeScript",
-                       description="Execute SQL script against a database in DMS and return structured results.",
+                       description="Execute SQL script against a database in DMS and return structured results."
+                                   "If you don't know the databaseId, first use getDatabase or searchDatabase to retrieve it."
+                                   "(1)If you have the exact host, port, and database name, use getDatabase."
+                                   "(2)If you only know the database name, use searchDatabase."
+                                   "(3)If you don't know any information, ask the user to provide the necessary details."
+                                   "Note: searchDatabase may return multiple databases. In this case, let the user choose which one to use.",
                        annotations={"title": "在DMS中执行SQL脚本", "readOnlyHint": False, "destructiveHint": True})
         async def execute_script_full_wrapper(
                 database_id: str = Field(description="Required DMS databaseId. Obtained via getDatabase tool"),
@@ -560,13 +657,15 @@ class ToolRegistry:
 
         self.mcp.tool(name="generateSql", description="Generate SELECT-type SQL queries from natural language input.",
                       annotations={"title": "自然语言转SQL (DMS)", "readOnlyHint": True})(nl2sql)
-        
+
         self.mcp.tool(name="configureDtsJob", description="Configure a dts job.",
-                      annotations={"title": "配置DTS任务", "readOnlyHint": False, "destructiveHint": True})(configureDtsJob)
+                      annotations={"title": "配置DTS任务", "readOnlyHint": False, "destructiveHint": True})(
+            configureDtsJob)
         self.mcp.tool(name="startDtsJob", description="Start a dts job.",
                       annotations={"title": "启动DTS任务", "readOnlyHint": False, "destructiveHint": True})(startDtsJob)
         self.mcp.tool(name="getDtsJob", description="Get a dts job detail information.",
                       annotations={"title": "查询DTS任务详细信息", "readOnlyHint": True})(getDtsJob)
+
 
 # --- Lifespan Function ---
 @asynccontextmanager
@@ -659,7 +758,8 @@ async def lifespan(app: FastMCP) -> AsyncGenerator[None, None]:
                             if not database or database.DatabaseId is None:
                                 logger.warning(
                                     f"No database found for {search_term_for_db} at {db_host}:{db_port} after processing CONNECTION_STRING.")
-                                database = await get_database(host=db_host, port=db_port, schema_name=search_term_for_db, sid=None)
+                                database = await get_database(host=db_host, port=db_port,
+                                                              schema_name=search_term_for_db, sid=None)
                             found_db_id = None
                             if database:
                                 found_db_id = database.DatabaseId
@@ -702,6 +802,7 @@ async def lifespan(app: FastMCP) -> AsyncGenerator[None, None]:
     if hasattr(app.state, 'default_database_id'):
         delattr(app.state, 'default_database_id')
 
+
 # --- FastMCP Instance Creation & Server Run ---
 mcp = FastMCP(
     "DatabaseManagementAssistant",
@@ -711,11 +812,13 @@ mcp = FastMCP(
                  "interacting with databases."
 )
 
+
 def run_server():
     log_level_str = os.getenv("LOG_LEVEL", "INFO").upper()
     logging.basicConfig(level=log_level_str, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     logger.info(f"Starting DMS MCP server with log level {log_level_str}")
     mcp.run(transport=os.getenv('SERVER_TRANSPORT', 'stdio'))
+
 
 if __name__ == "__main__":
     run_server()
