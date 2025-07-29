@@ -6,9 +6,9 @@ import json
 from contextlib import asynccontextmanager
 from collections.abc import AsyncGenerator
 from typing import Dict, Any, Optional, List, Union
-from urllib.parse import urlparse
 
 from pydantic import Field, BaseModel, ConfigDict
+
 from mcp.server.fastmcp import FastMCP
 
 from alibabacloud_dms_enterprise20181101.client import Client as dms_enterprise20181101Client
@@ -195,6 +195,8 @@ async def add_instance(
         req.instance_id = instance_resource_id
     if region:
         req.region = region
+    if mcp.state.real_login_uid:
+        req.real_login_user_uid = mcp.state.real_login_uid
     try:
         resp = client.simply_add_instance(req)
         return InstanceInfo(**resp.body.to_map()) if resp and resp.body else InstanceInfo()
@@ -211,6 +213,8 @@ async def get_instance(
     client = create_client()
     req = dms_enterprise_20181101_models.GetInstanceRequest(host=host, port=port)
     if sid: req.sid = sid
+    if mcp.state.real_login_uid:
+        req.real_login_user_uid = mcp.state.real_login_uid
     try:
         resp = client.get_instance(req)
         instance_data = resp.body.to_map().get('Instance', {}) if resp and resp.body else {}
@@ -221,10 +225,13 @@ async def get_instance(
 
 
 async def list_instance(
-        search_key: Optional[str] = Field(default=None, description="Optional search key (e.g., instance host, instance alias, etc.)"),
-        db_type: Optional[str] = Field(default=None, description="Optional instanceType, or called dbType (e.g., mysql, polardb, oracle, "
-                                                                 "postgresql, sqlserver, polardb-pg, etc.)"),
-        env_type: Optional[str] = Field(default=None, description="Optional instance environment type (e.g., product, dev, test, etc. )")
+        search_key: Optional[str] = Field(default=None,
+                                          description="Optional search key (e.g., instance host, instance alias, etc.)"),
+        db_type: Optional[str] = Field(default=None,
+                                       description="Optional instanceType, or called dbType (e.g., mysql, polardb, oracle, "
+                                                   "postgresql, sqlserver, polardb-pg, etc.)"),
+        env_type: Optional[str] = Field(default=None,
+                                        description="Optional instance environment type (e.g., product, dev, test, etc. )")
 ) -> List[InstanceDetail]:
     client = create_client()
     req = dms_enterprise_20181101_models.ListInstancesRequest()
@@ -234,6 +241,8 @@ async def list_instance(
         req.db_type = db_type
     if env_type:
         req.env_type = env_type
+    if mcp.state.real_login_uid:
+        req.real_login_user_uid = mcp.state.real_login_uid
     try:
         resp = client.list_instances(req)
 
@@ -262,6 +271,8 @@ async def search_database(
     client = create_client()
     req = dms_enterprise_20181101_models.SearchDatabaseRequest(search_key=search_key, page_number=page_number,
                                                                page_size=page_size)
+    if mcp.state.real_login_uid:
+        req.real_login_user_uid = mcp.state.real_login_uid
     try:
         resp = client.search_database(req)
         if not resp or not resp.body: return []
@@ -288,6 +299,8 @@ async def get_database(
     client = create_client()
     req = dms_enterprise_20181101_models.GetDatabaseRequest(host=host, port=port, schema_name=schema_name)
     if sid: req.sid = sid
+    if mcp.state.real_login_uid:
+        req.real_login_user_uid = mcp.state.real_login_uid
     try:
         resp = client.get_database(req)
         db_data = resp.body.to_map().get('Database', {}) if resp and resp.body else {}
@@ -309,6 +322,8 @@ async def list_tables(  # Renamed from listTable to follow convention
     req = dms_enterprise_20181101_models.ListTablesRequest(database_id=database_id, search_name=search_name,
                                                            page_number=page_number, page_size=page_size,
                                                            return_guid=True)
+    if mcp.state.real_login_uid:
+        req.real_login_user_uid = mcp.state.real_login_uid
     try:
         resp = client.list_tables(req)
         return resp.body.to_map() if resp and resp.body else {}
@@ -323,6 +338,8 @@ async def get_meta_table_detail_info(
 ) -> TableDetail:
     client = create_client()
     req = dms_enterprise_20181101_models.GetMetaTableDetailInfoRequest(table_guid=table_guid)
+    if mcp.state.real_login_uid:
+        req.real_login_user_uid = mcp.state.real_login_uid
     try:
         resp = client.get_meta_table_detail_info(req)
         detail_info = resp.body.to_map().get('DetailInfo', {}) if resp and resp.body else {}
@@ -350,6 +367,8 @@ async def execute_script(
 ) -> ExecuteScriptResult:  # Return the object, __str__ will be used by wrapper if needed
     client = create_client()
     req = dms_enterprise_20181101_models.ExecuteScriptRequest(db_id=database_id, script=script, logic=logic)
+    if mcp.state.real_login_uid:
+        req.real_login_user_uid = mcp.state.real_login_uid
     try:
         resp = client.execute_script(req)
         if not resp or not resp.body:
@@ -385,6 +404,8 @@ async def nl2sql(
     client = create_client()
     req = dms_enterprise_20181101_models.GenerateSqlFromNLRequest(db_id=database_id, question=question)
     if knowledge: req.knowledge = knowledge
+    if mcp.state.real_login_uid:
+        req.real_login_user_uid = mcp.state.real_login_uid
     try:
         resp = client.generate_sql_from_nl(req)
         if not resp or not resp.body: return SqlResult(sql=None)
@@ -619,7 +640,8 @@ class ToolRegistry:
             add_instance)
         self.mcp.tool(name="listInstances", description="Search for instances from DMS.",
                       annotations={"title": "搜索DMS实例列表", "readOnlyHint": True})(list_instance)
-        self.mcp.tool(name="getInstance", description="Retrieve detailed instance information from DMS using the host and port.",
+        self.mcp.tool(name="getInstance",
+                      description="Retrieve detailed instance information from DMS using the host and port.",
                       annotations={"title": "获取DMS实例详情", "readOnlyHint": True})(get_instance)
         self.mcp.tool(name="searchDatabase", description="Search databases in DMS by name.",
                       annotations={"title": "搜索DMS数据库", "readOnlyHint": True})(search_database)
@@ -678,7 +700,14 @@ async def lifespan(app: FastMCP) -> AsyncGenerator[None, None]:
 
         app.state = AppState()
 
-    app.state.default_database_id = None  # Initialize default_database_id
+    # Initialize realLoginUid
+    app.state.real_login_uid = None
+    uid = os.getenv("UID")
+    if uid:
+        app.state.real_login_uid = uid
+
+    # Initialize default_database_id
+    app.state.default_database_id = None
 
     dms_connection_string = os.getenv("CONNECTION_STRING")
     if dms_connection_string:
@@ -801,6 +830,8 @@ async def lifespan(app: FastMCP) -> AsyncGenerator[None, None]:
     logger.info("Shutting down DMS MCP Server via lifespan")
     if hasattr(app.state, 'default_database_id'):
         delattr(app.state, 'default_database_id')
+    if hasattr(app.state, 'real_login_uid'):
+        delattr(app.state, 'real_login_uid')
 
 
 # --- FastMCP Instance Creation & Server Run ---
