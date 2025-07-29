@@ -12,6 +12,7 @@
 ## Core Features
 **Secure Access**
 - **Account and Password Security Management**：Safely manage database account passwords without manual maintenance, effectively preventing sensitive information leakage.
+- **Intranet Access Support**：Enables database access through an internal network, keeping data within the premises and significantly enhancing data security and privacy protection.
 - **Fine-grained Permission Control**：Supports instance, database, table, field, and row-level access control, precisely restricting caller permissions to prevent unauthorized operations and ensure data security.
 - **High-risk SQL Identification and Blocking**: Built-in rich rule engine that identifies and blocks potential high-risk SQL in real time to mitigate security risks.
 - **SQL Audit Trail**: Records all SQL operation logs, supporting full traceability and compliance audits to meet regulatory requirements.
