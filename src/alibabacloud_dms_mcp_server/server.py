@@ -908,7 +908,6 @@ async def lifespan(app: FastMCP) -> AsyncGenerator[None, None]:
 mcp = FastMCP(
     "DatabaseManagementAssistant",
     lifespan=lifespan,
-    on_duplicate_tools="replace",
     instructions="Database Management Assistant (DMS) is a toolkit designed to assist users in managing and "
                  "interacting with databases."
 )
