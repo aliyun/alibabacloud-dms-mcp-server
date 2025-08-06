@@ -1,8 +1,5 @@
 import os
 import logging
-import random
-import string
-import json
 from contextlib import asynccontextmanager
 from collections.abc import AsyncGenerator
 from typing import Dict, Any, Optional, List, Union
@@ -14,35 +11,9 @@ from mcp.server.fastmcp import FastMCP
 from alibabacloud_dms_enterprise20181101.client import Client as dms_enterprise20181101Client
 from alibabacloud_tea_openapi import models as open_api_models
 from alibabacloud_dms_enterprise20181101 import models as dms_enterprise_20181101_models
-from alibabacloud_tea_openapi.models import Config
-from alibabacloud_tea_util import models as util_models
 
 # --- Global Logger ---
 logger = logging.getLogger(__name__)
-
-g_reserved = '''{
-    "targetTableMode": "0",
-    "dbListCaseChangeMode": "default",
-    "isAnalyzer": false,
-    "eventMove": false,
-    "tableAnalyze": false,
-    "whitelist.dms.online.ddl.enable": false,
-    "sqlparser.dms.original.ddl": true,
-    "whitelist.ghost.online.ddl.enable": false,
-    "sqlparser.ghost.original.ddl": false,
-    "privilegeMigration": false,
-    "definer": false,
-    "privilegeDbList": "[]",
-    "maxRetryTime": 43200,
-    "retry.blind.seconds": 600,
-    "srcSSL": "0",
-    "srcMySQLType": "HighAvailability",
-    "destSSL": "0",
-    "a2aFlag": "2.0",
-    "channelInfo": "mcp",
-    "autoStartModulesAfterConfig": "none"
-}
-'''
 
 
 # --- Pydantic Models ---
