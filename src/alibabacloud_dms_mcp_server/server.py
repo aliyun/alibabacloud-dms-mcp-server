@@ -253,9 +253,12 @@ async def get_database(
 ) -> DatabaseDetail:
     client = create_client()
     req = dms_enterprise_20181101_models.GetDatabaseRequest(host=host, port=port, schema_name=schema_name)
-    if sid: req.sid = sid
+   
+    if sid:
+        req.sid = sid
     if mcp.state.real_login_uid:
         req.real_login_user_uid = mcp.state.real_login_uid
+
     try:
         resp = client.get_database(req)
         db_data = resp.body.to_map().get('Database', {}) if resp and resp.body else {}
@@ -351,6 +354,67 @@ async def execute_script(
             return "当前实例尚未开启安全托管功能。您可以通过DMS控制台免费开启「安全托管模式」。请注意，该操作需要管理员或DBA身份权限。"
 
 
+async def create_data_change_order(
+        database_id: str = Field(description="DMS databaseId"),
+        script: str = Field(description="SQL script to execute"),
+        logic: bool = Field(default=False, description="Whether to use logical execution mode")
+) -> Dict[str, Any]:
+
+    client = create_client()
+    req = dms_enterprise_20181101_models.CreateDataCorrectOrderRequest()
+    req.comment = "Data correct order submitted by MCP"
+
+    param = dms_enterprise_20181101_models.CreateDataCorrectOrderRequestParam()
+    param.estimate_affect_rows = 1
+    param.sql_type = "TEXT"
+    param.exec_sql = script
+    param.classify = "MCP"
+
+    db_list = dms_enterprise_20181101_models.CreateDataCorrectOrderRequestParamDbItemList()
+    db_list.db_id = database_id
+    db_list.logic = logic
+
+    db_items = [db_list]
+    param.db_item_list = db_items
+
+    req.param = param
+    try:
+        resp = client.create_data_correct_order(req)
+        return resp.body
+    except Exception as e:
+        logger.error(f"Error in create_data_change_order: {e}")
+        raise
+
+
+async def get_order_base_info(
+        order_id: str = Field(description="DMS order ID")
+) -> Dict[str, Any]:
+
+    client = create_client()
+    req = dms_enterprise_20181101_models.GetOrderBaseInfoRequest()
+    req.order_id = order_id
+    try:
+        resp = client.get_order_base_info(req)
+        return resp.body
+    except Exception as e:
+        logger.error(f"Error in get_order_base_info: {e}")
+        raise
+
+
+async def submit_order_approval(
+        order_id: str = Field(description="DMS order ID")
+) -> Dict[str, Any]:
+
+    client = create_client()
+    req = dms_enterprise_20181101_models.SubmitOrderApprovalRequest()
+    req.order_id = order_id
+    try:
+        resp = client.submit_order_approval(req)
+        return resp.body
+    except Exception as e:
+        logger.error(f"Error in submit_order_approval: {e}")
+        raise
+
 async def nl2sql(
         database_id: str = Field(description="DMS databaseId"),
         question: str = Field(description="Natural language question"),
@@ -412,11 +476,27 @@ class ToolRegistry:
                        annotations={"title": "Execute SQL (Pre-configured DB)", "readOnlyHint": False,
                                     "destructiveHint": True})
         async def execute_script_configured(
-                script: str = Field(description="SQL script to execute"),
-                logic: bool = Field(description="Whether to use logical execution mode", default=False)
+                script: str = Field(description="SQL script to execute")
         ) -> str:
-            result_obj = await execute_script(database_id=self.default_database_id, script=script, logic=logic)
+            result_obj = await execute_script(database_id=self.default_database_id, script=script, logic=False)
             return str(result_obj)
+
+        @self.mcp.tool(name="createDataChangeOrder",
+                       description="Execute SQL changes through a data change order, and a corresponding order ID will be returned. "
+                                   "Prefer using the executeScript tool for SQL execution; "
+                                   "only use this tool when explicitly instructed to perform the operation via a order.",
+                       annotations={"title": "在DMS中创建数据变更工单", "readOnlyHint": False, "destructiveHint": True})
+        async def create_data_change_order_configured(
+                script: str = Field(description="SQL script to execute")
+        ) -> str:
+            result_obj = await create_data_change_order(database_id=self.default_database_id, script=script, logic=False)
+            return str(result_obj)
+
+        self.mcp.tool(name="getOrderInfo", description="Retrieve order information from DMS using the order ID.",
+                      annotations={"title": "获取DMS工单详情", "readOnlyHint": True})(get_order_base_info)
+
+        self.mcp.tool(name="submitOrderApproval", description="Submit the order for approval in DMS using the order ID.",
+                      annotations={"title": "提交工单审批", "readOnlyHint": False})(submit_order_approval)
 
         @self.mcp.tool(name="askDatabase",
                        description="Ask a question in natural language to the pre-configured database and get results directly.",
@@ -493,6 +573,29 @@ class ToolRegistry:
         ) -> str:  # Return string representation
             result_obj = await execute_script(database_id=database_id, script=script, logic=logic)
             return str(result_obj)
+
+        @self.mcp.tool(name="createDataChangeOrder",
+                       description="Execute SQL changes through a data change order, and a corresponding order ID will be returned. "
+                                   "Prefer using the executeScript tool for SQL execution; only use this tool when explicitly instructed to perform the operation via a order."
+                                   "If you don't know the databaseId, first use getDatabase or searchDatabase to retrieve it."
+                                   "(1)If you have the exact host, port, and database name, use getDatabase."
+                                   "(2)If you only know the database name, use searchDatabase."
+                                   "(3)If you don't know any information, ask the user to provide the necessary details."
+                                   "Note: searchDatabase may return multiple databases. In this case, let the user choose which one to use.",
+                       annotations={"title": "在DMS中创建数据变更工单", "readOnlyHint": False, "destructiveHint": True})
+        async def create_data_change_order_wrapper(
+                database_id: str = Field(description="Required DMS databaseId. Obtained via getDatabase tool"),
+                script: str = Field(description="SQL script to execute"),
+                logic: bool = Field(description="Whether to use logical execution mode", default=False)
+        ) -> str:  # Return string representation
+            result_obj = await create_data_change_order(database_id=database_id, script=script, logic=logic)
+            return str(result_obj)
+
+        self.mcp.tool(name="getOrderInfo", description="Retrieve order information from DMS using the order ID.",
+                      annotations={"title": "获取DMS工单详情", "readOnlyHint": True})(get_order_base_info)
+
+        self.mcp.tool(name="submitOrderApproval", description="Submit the order for approval in DMS using the order ID.",
+                      annotations={"title": "提交工单审批", "readOnlyHint": False})(submit_order_approval)
 
         self.mcp.tool(name="generateSql", description="Generate SELECT-type SQL queries from natural language input.",
                       annotations={"title": "自然语言转SQL (DMS)", "readOnlyHint": True})(nl2sql)
@@ -648,7 +751,6 @@ async def lifespan(app: FastMCP) -> AsyncGenerator[None, None]:
 mcp = FastMCP(
     "DatabaseManagementAssistant",
     lifespan=lifespan,
-    on_duplicate_tools="replace",
     instructions="Database Management Assistant (DMS) is a toolkit designed to assist users in managing and "
                  "interacting with databases."
 )
