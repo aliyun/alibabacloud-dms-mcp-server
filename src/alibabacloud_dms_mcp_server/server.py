@@ -127,6 +127,7 @@ def create_client() -> dms_enterprise20181101Client:
     config.user_agent = "dms-mcp"
     return dms_enterprise20181101Client(config)
 
+
 async def add_instance(
         db_user: str = Field(description="The username used to connect to the database"),
         db_password: str = Field(description="The password used to connect to the database"),
@@ -370,6 +371,7 @@ async def nl2sql(
         logger.error(f"Error in nl2sql_explicit_db: {e}")
         raise
 
+
 # --- ToolRegistry Class ---
 class ToolRegistry:
     def __init__(self, mcp: FastMCP):
@@ -512,6 +514,7 @@ async def lifespan(app: FastMCP) -> AsyncGenerator[None, None]:
     uid = os.getenv("UID")
     if uid:
         app.state.real_login_uid = uid
+        logger.info(f"RealLoginUid environment variable found: {uid}")
 
     # Initialize default_database_id
     app.state.default_database_id = None
