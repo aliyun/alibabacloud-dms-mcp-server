@@ -1,50 +1,19 @@
 import os
 import logging
-import random
-import string
-import json
 from contextlib import asynccontextmanager
 from collections.abc import AsyncGenerator
 from typing import Dict, Any, Optional, List, Union
-from urllib.parse import urlparse
 
 from pydantic import Field, BaseModel, ConfigDict
+
 from mcp.server.fastmcp import FastMCP
 
 from alibabacloud_dms_enterprise20181101.client import Client as dms_enterprise20181101Client
 from alibabacloud_tea_openapi import models as open_api_models
 from alibabacloud_dms_enterprise20181101 import models as dms_enterprise_20181101_models
-from alibabacloud_dts20200101 import models as dts_20200101_models
-from alibabacloud_dts20200101.client import Client as DtsClient
-from alibabacloud_tea_openapi.models import Config
-from alibabacloud_tea_util import models as util_models
 
 # --- Global Logger ---
 logger = logging.getLogger(__name__)
-
-g_reserved = '''{
-    "targetTableMode": "0",
-    "dbListCaseChangeMode": "default",
-    "isAnalyzer": false,
-    "eventMove": false,
-    "tableAnalyze": false,
-    "whitelist.dms.online.ddl.enable": false,
-    "sqlparser.dms.original.ddl": true,
-    "whitelist.ghost.online.ddl.enable": false,
-    "sqlparser.ghost.original.ddl": false,
-    "privilegeMigration": false,
-    "definer": false,
-    "privilegeDbList": "[]",
-    "maxRetryTime": 43200,
-    "retry.blind.seconds": 600,
-    "srcSSL": "0",
-    "srcMySQLType": "HighAvailability",
-    "destSSL": "0",
-    "a2aFlag": "2.0",
-    "channelInfo": "mcp",
-    "autoStartModulesAfterConfig": "none"
-}
-'''
 
 
 # --- Pydantic Models ---
@@ -159,20 +128,6 @@ def create_client() -> dms_enterprise20181101Client:
     return dms_enterprise20181101Client(config)
 
 
-def get_dts_client(region_id: str):
-    config = Config(
-        access_key_id=os.getenv('ALIBABA_CLOUD_ACCESS_KEY_ID'),
-        access_key_secret=os.getenv('ALIBABA_CLOUD_ACCESS_KEY_SECRET'),
-        security_token=os.getenv('ALIBABA_CLOUD_SECURITY_TOKEN'),
-        region_id=region_id,
-        protocol="https",
-        connect_timeout=10 * 1000,
-        read_timeout=300 * 1000
-    )
-    client = DtsClient(config)
-    return client
-
-
 async def add_instance(
         db_user: str = Field(description="The username used to connect to the database"),
         db_password: str = Field(description="The password used to connect to the database"),
@@ -195,6 +150,8 @@ async def add_instance(
         req.instance_id = instance_resource_id
     if region:
         req.region = region
+    if mcp.state.real_login_uid:
+        req.real_login_user_uid = mcp.state.real_login_uid
     try:
         resp = client.simply_add_instance(req)
         return InstanceInfo(**resp.body.to_map()) if resp and resp.body else InstanceInfo()
@@ -211,6 +168,8 @@ async def get_instance(
     client = create_client()
     req = dms_enterprise_20181101_models.GetInstanceRequest(host=host, port=port)
     if sid: req.sid = sid
+    if mcp.state.real_login_uid:
+        req.real_login_user_uid = mcp.state.real_login_uid
     try:
         resp = client.get_instance(req)
         instance_data = resp.body.to_map().get('Instance', {}) if resp and resp.body else {}
@@ -221,10 +180,13 @@ async def get_instance(
 
 
 async def list_instance(
-        search_key: Optional[str] = Field(default=None, description="Optional search key (e.g., instance host, instance alias, etc.)"),
-        db_type: Optional[str] = Field(default=None, description="Optional instanceType, or called dbType (e.g., mysql, polardb, oracle, "
-                                                                 "postgresql, sqlserver, polardb-pg, etc.)"),
-        env_type: Optional[str] = Field(default=None, description="Optional instance environment type (e.g., product, dev, test, etc. )")
+        search_key: Optional[str] = Field(default=None,
+                                          description="Optional search key (e.g., instance host, instance alias, etc.)"),
+        db_type: Optional[str] = Field(default=None,
+                                       description="Optional instanceType, or called dbType (e.g., mysql, polardb, oracle, "
+                                                   "postgresql, sqlserver, polardb-pg, etc.)"),
+        env_type: Optional[str] = Field(default=None,
+                                        description="Optional instance environment type (e.g., product, dev, test, etc. )")
 ) -> List[InstanceDetail]:
     client = create_client()
     req = dms_enterprise_20181101_models.ListInstancesRequest()
@@ -234,6 +196,8 @@ async def list_instance(
         req.db_type = db_type
     if env_type:
         req.env_type = env_type
+    if mcp.state.real_login_uid:
+        req.real_login_user_uid = mcp.state.real_login_uid
     try:
         resp = client.list_instances(req)
 
@@ -262,6 +226,8 @@ async def search_database(
     client = create_client()
     req = dms_enterprise_20181101_models.SearchDatabaseRequest(search_key=search_key, page_number=page_number,
                                                                page_size=page_size)
+    if mcp.state.real_login_uid:
+        req.real_login_user_uid = mcp.state.real_login_uid
     try:
         resp = client.search_database(req)
         if not resp or not resp.body: return []
@@ -287,8 +253,12 @@ async def get_database(
 ) -> DatabaseDetail:
     client = create_client()
     req = dms_enterprise_20181101_models.GetDatabaseRequest(host=host, port=port, schema_name=schema_name)
+   
     if sid:
         req.sid = sid
+    if mcp.state.real_login_uid:
+        req.real_login_user_uid = mcp.state.real_login_uid
+
     try:
         resp = client.get_database(req)
         db_data = resp.body.to_map().get('Database', {}) if resp and resp.body else {}
@@ -310,6 +280,8 @@ async def list_tables(  # Renamed from listTable to follow convention
     req = dms_enterprise_20181101_models.ListTablesRequest(database_id=database_id, search_name=search_name,
                                                            page_number=page_number, page_size=page_size,
                                                            return_guid=True)
+    if mcp.state.real_login_uid:
+        req.real_login_user_uid = mcp.state.real_login_uid
     try:
         resp = client.list_tables(req)
         return resp.body.to_map() if resp and resp.body else {}
@@ -324,6 +296,8 @@ async def get_meta_table_detail_info(
 ) -> TableDetail:
     client = create_client()
     req = dms_enterprise_20181101_models.GetMetaTableDetailInfoRequest(table_guid=table_guid)
+    if mcp.state.real_login_uid:
+        req.real_login_user_uid = mcp.state.real_login_uid
     try:
         resp = client.get_meta_table_detail_info(req)
         detail_info = resp.body.to_map().get('DetailInfo', {}) if resp and resp.body else {}
@@ -351,6 +325,8 @@ async def execute_script(
 ) -> ExecuteScriptResult:  # Return the object, __str__ will be used by wrapper if needed
     client = create_client()
     req = dms_enterprise_20181101_models.ExecuteScriptRequest(db_id=database_id, script=script, logic=logic)
+    if mcp.state.real_login_uid:
+        req.real_login_user_uid = mcp.state.real_login_uid
     try:
         resp = client.execute_script(req)
         if not resp or not resp.body:
@@ -447,6 +423,8 @@ async def nl2sql(
     client = create_client()
     req = dms_enterprise_20181101_models.GenerateSqlFromNLRequest(db_id=database_id, question=question)
     if knowledge: req.knowledge = knowledge
+    if mcp.state.real_login_uid:
+        req.real_login_user_uid = mcp.state.real_login_uid
     try:
         resp = client.generate_sql_from_nl(req)
         if not resp or not resp.body: return SqlResult(sql=None)
@@ -456,136 +434,6 @@ async def nl2sql(
     except Exception as e:
         logger.error(f"Error in nl2sql_explicit_db: {e}")
         raise
-
-
-async def configureDtsJob(
-        region_id: str = Field(description="The region id of the dts job (e.g., 'cn-hangzhou')"),
-        job_type: str = Field(
-            description="The type of job (synchronization job: SYNC, migration job: MIGRATION, data check job: CHECK)"),
-        source_endpoint_region: str = Field(description="The source endpoint region ID"),
-        source_endpoint_instance_type: str = Field(
-            description="The source endpoint instance type (RDS, ECS, EXPRESS, CEN, DG)"),
-        source_endpoint_engine_name: str = Field(
-            description="The source endpoint engine name (MySQL, PostgreSQL, SQLServer)"),
-        source_endpoint_instance_id: str = Field(description="The source endpoint instance ID (e.g., 'rm-xxx')"),
-        source_endpoint_user_name: str = Field(description="The source endpoint user name"),
-        source_endpoint_password: str = Field(description="The source endpoint password"),
-        destination_endpoint_region: str = Field(description="The destination endpoint region ID"),
-        destination_endpoint_instance_type: str = Field(
-            description="The destination endpoint instance type (RDS, ECS, EXPRESS, CEN, DG)"),
-        destination_endpoint_engine_name: str = Field(
-            description="The destination endpoint engine name (MySQL, PostgreSQL, SQLServer)"),
-        destination_endpoint_instance_id: str = Field(
-            description="The destination endpoint instance ID (e.g., 'rm-xxx')"),
-        destination_endpoint_user_name: str = Field(description="The destination endpoint user name"),
-        destination_endpoint_password: str = Field(description="The destination endpoint password"),
-        db_list: Dict[str, Any] = Field(
-            description='The database objects in JSON format, example 1: migration dtstest database, db_list should like {"dtstest":{"name":"dtstest","all":true}}; example 2: migration one table task01 in dtstest database, db_list should like {"dtstest":{"name":"dtstest","all":false,"Table":{"task01":{"name":"task01","all":true}}}}; example 3: migration two tables task01 and task02 in dtstest database, db_list should like {"dtstest":{"name":"dtstest","all":false,"Table":{"task01":{"name":"task01","all":true},"task02":{"name":"task02","all":true}}}}')
-) -> Dict[str, Any]:
-    try:
-        db_list_str = json.dumps(db_list, separators=(',', ':'))
-        logger.info(f"Configure dts job with db_list: {db_list_str}")
-
-        # init dts client
-        client = get_dts_client(region_id)
-        runtime = util_models.RuntimeOptions()
-
-        # create dts instance
-        create_dts_instance_request = dts_20200101_models.CreateDtsInstanceRequest(
-            region_id=region_id,
-            type=job_type,
-            source_region=source_endpoint_region,
-            destination_region=destination_endpoint_region,
-            source_endpoint_engine_name=source_endpoint_engine_name,
-            destination_endpoint_engine_name=destination_endpoint_engine_name,
-            pay_type='PostPaid',
-            quantity=1,
-            min_du=1,
-            max_du=4,
-            instance_class='micro'
-        )
-
-        create_dts_instance_response = client.create_dts_instance_with_options(create_dts_instance_request, runtime)
-        logger.info(f"Create dts instance response: {create_dts_instance_response.body.to_map()}")
-        dts_job_id = create_dts_instance_response.body.to_map()['JobId']
-
-        # configure dts job
-        ran_job_name = 'dtsmcp-' + ''.join(random.sample(string.ascii_letters + string.digits, 6))
-        custom_reserved = json.loads(g_reserved)
-        dts_mcp_channel = os.getenv('DTS_MCP_CHANNEL')
-        if dts_mcp_channel and len(dts_mcp_channel) > 0:
-            logger.info(f"Configure dts job with custom dts mcp channel: {dts_mcp_channel}")
-            custom_reserved['channelInfo'] = dts_mcp_channel
-        custom_reserved_str = json.dumps(custom_reserved, separators=(',', ':'))
-        logger.info(f"Configure dts job with reserved: {custom_reserved_str}")
-        configure_dts_job_request = dts_20200101_models.ConfigureDtsJobRequest(
-            region_id=region_id,
-            dts_job_name=ran_job_name,
-            source_endpoint_instance_type=source_endpoint_instance_type,
-            source_endpoint_engine_name=source_endpoint_engine_name,
-            source_endpoint_instance_id=source_endpoint_instance_id,
-            source_endpoint_region=source_endpoint_region,
-            source_endpoint_user_name=source_endpoint_user_name,
-            source_endpoint_password=source_endpoint_password,
-            destination_endpoint_instance_type=destination_endpoint_instance_type,
-            destination_endpoint_instance_id=destination_endpoint_instance_id,
-            destination_endpoint_engine_name=destination_endpoint_engine_name,
-            destination_endpoint_region=destination_endpoint_region,
-            destination_endpoint_user_name=destination_endpoint_user_name,
-            destination_endpoint_password=destination_endpoint_password,
-            structure_initialization=True,
-            data_initialization=True,
-            data_synchronization=False,
-            job_type=job_type,
-            db_list=db_list_str,
-            reserve=custom_reserved_str
-        )
-
-        if dts_job_id and len(dts_job_id) > 0:
-            configure_dts_job_request.dts_job_id = dts_job_id
-
-        configure_dts_job_response = client.configure_dts_job_with_options(configure_dts_job_request, runtime)
-        logger.info(f"Configure dts job response: {configure_dts_job_response.body.to_map()}")
-        return configure_dts_job_response.body.to_map()
-    except Exception as e:
-        logger.error(f"Error occurred while configure dts job: {str(e)}")
-        raise e
-
-
-async def startDtsJob(
-        region_id: str = Field(description="The region id of the dts job (e.g., 'cn-hangzhou')"),
-        dts_job_id: str = Field(description="The job id of the dts job")
-) -> Dict[str, Any]:
-    try:
-        client = get_dts_client(region_id)
-        request = dts_20200101_models.StartDtsJobRequest(
-            region_id=region_id,
-            dts_job_id=dts_job_id
-        )
-        runtime = util_models.RuntimeOptions()
-        response = client.start_dts_job_with_options(request, runtime)
-        return response.body.to_map()
-    except Exception as e:
-        logger.error(f"Error occurred while start dts job: {str(e)}")
-        raise e
-
-
-async def getDtsJob(
-        region_id: str = Field(description="The region id of the dts job (e.g., 'cn-hangzhou')"),
-        dts_job_id: str = Field(description="The job id of the dts job")
-) -> Dict[str, Any]:
-    try:
-        client = get_dts_client(region_id)
-        request = dts_20200101_models.DescribeDtsJobDetailRequest(
-            region_id=region_id,
-            dts_job_id=dts_job_id
-        )
-        runtime = util_models.RuntimeOptions()
-        response = client.describe_dts_job_detail_with_options(request, runtime)
-        return response.body.to_map()
-    except Exception as e:
-        logger.error(f"Error occurred while describe dts job detail: {str(e)}")
-        raise e
 
 
 # --- ToolRegistry Class ---
@@ -678,14 +526,6 @@ class ToolRegistry:
                 return AskDatabaseResult(executed_sql=generated_sql,
                                          execution_result=f"Error: An issue occurred while executing the query: {str(e)}")
 
-        self.mcp.tool(name="configureDtsJob", description="Configure a dts job.",
-                      annotations={"title": "配置DTS任务", "readOnlyHint": False, "destructiveHint": True})(
-            configureDtsJob)
-        self.mcp.tool(name="startDtsJob", description="Start a dts job.",
-                      annotations={"title": "启动DTS任务", "readOnlyHint": False, "destructiveHint": True})(startDtsJob)
-        self.mcp.tool(name="getDtsJob", description="Get a dts job detail information.",
-                      annotations={"title": "查询DTS任务详细信息", "readOnlyHint": True})(getDtsJob)
-
     def _register_full_toolset(self):
         self.mcp.tool(name="addInstance",
                       description="Add an instance to DMS. The username and password are required. "
@@ -697,7 +537,8 @@ class ToolRegistry:
             add_instance)
         self.mcp.tool(name="listInstances", description="Search for instances from DMS.",
                       annotations={"title": "搜索DMS实例列表", "readOnlyHint": True})(list_instance)
-        self.mcp.tool(name="getInstance", description="Retrieve detailed instance information from DMS using the host and port.",
+        self.mcp.tool(name="getInstance",
+                      description="Retrieve detailed instance information from DMS using the host and port.",
                       annotations={"title": "获取DMS实例详情", "readOnlyHint": True})(get_instance)
         self.mcp.tool(name="searchDatabase", description="Search databases in DMS by name.",
                       annotations={"title": "搜索DMS数据库", "readOnlyHint": True})(search_database)
@@ -759,14 +600,6 @@ class ToolRegistry:
         self.mcp.tool(name="generateSql", description="Generate SELECT-type SQL queries from natural language input.",
                       annotations={"title": "自然语言转SQL (DMS)", "readOnlyHint": True})(nl2sql)
 
-        self.mcp.tool(name="configureDtsJob", description="Configure a dts job.",
-                      annotations={"title": "配置DTS任务", "readOnlyHint": False, "destructiveHint": True})(
-            configureDtsJob)
-        self.mcp.tool(name="startDtsJob", description="Start a dts job.",
-                      annotations={"title": "启动DTS任务", "readOnlyHint": False, "destructiveHint": True})(startDtsJob)
-        self.mcp.tool(name="getDtsJob", description="Get a dts job detail information.",
-                      annotations={"title": "查询DTS任务详细信息", "readOnlyHint": True})(getDtsJob)
-
 
 # --- Lifespan Function ---
 @asynccontextmanager
@@ -779,7 +612,15 @@ async def lifespan(app: FastMCP) -> AsyncGenerator[None, None]:
 
         app.state = AppState()
 
-    app.state.default_database_id = None  # Initialize default_database_id
+    # Initialize realLoginUid
+    app.state.real_login_uid = None
+    uid = os.getenv("UID")
+    if uid:
+        app.state.real_login_uid = uid
+        logger.info(f"RealLoginUid environment variable found: {uid}")
+
+    # Initialize default_database_id
+    app.state.default_database_id = None
 
     dms_connection_string = os.getenv("CONNECTION_STRING")
     if dms_connection_string:
@@ -902,6 +743,8 @@ async def lifespan(app: FastMCP) -> AsyncGenerator[None, None]:
     logger.info("Shutting down DMS MCP Server via lifespan")
     if hasattr(app.state, 'default_database_id'):
         delattr(app.state, 'default_database_id')
+    if hasattr(app.state, 'real_login_uid'):
+        delattr(app.state, 'real_login_uid')
 
 
 # --- FastMCP Instance Creation & Server Run ---
