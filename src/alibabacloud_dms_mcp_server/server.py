@@ -27,9 +27,9 @@ class AskDatabaseResult(MyBaseModel):
 
 
 class InstanceInfo(MyBaseModel):
-    instance_id: Any = Field(description="Unique instance identifier in DMS", default=None)
-    host: Any = Field(description="The hostname of the database instance", default=None)
-    port: Any = Field(description="The connection port number", default=None)
+    InstanceId: Any = Field(description="Unique instance identifier in DMS", default=None)
+    Host: Any = Field(description="The hostname of the database instance", default=None)
+    Port: Any = Field(description="The connection port number", default=None)
 
 
 class InstanceDetail(MyBaseModel):
@@ -154,7 +154,13 @@ async def add_instance(
         req.real_login_user_uid = mcp.state.real_login_uid
     try:
         resp = client.simply_add_instance(req)
-        return InstanceInfo(**resp.body.to_map()) if resp and resp.body else InstanceInfo()
+
+        if resp and resp.body:
+            body_dict = resp.body.to_map()
+            return InstanceInfo(**(body_dict['Instance'] if 'Instance' in body_dict else body_dict))
+        else:
+            return InstanceInfo()
+
     except Exception as e:
         logger.error(f"Error in add_instance: {e}")
         raise
@@ -380,7 +386,7 @@ async def create_data_change_order(
     req.param = param
     try:
         resp = client.create_data_correct_order(req)
-        return resp.body
+        return resp.body.to_map()
     except Exception as e:
         logger.error(f"Error in create_data_change_order: {e}")
         raise
@@ -395,7 +401,7 @@ async def get_order_base_info(
     req.order_id = order_id
     try:
         resp = client.get_order_base_info(req)
-        return resp.body
+        return resp.body.to_map()
     except Exception as e:
         logger.error(f"Error in get_order_base_info: {e}")
         raise
@@ -410,7 +416,7 @@ async def submit_order_approval(
     req.order_id = order_id
     try:
         resp = client.submit_order_approval(req)
-        return resp.body
+        return resp.body.to_map()
     except Exception as e:
         logger.error(f"Error in submit_order_approval: {e}")
         raise
