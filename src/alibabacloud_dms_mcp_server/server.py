@@ -365,7 +365,6 @@ async def create_data_change_order(
         script: str = Field(description="SQL script to execute"),
         logic: bool = Field(default=False, description="Whether to use logical execution mode")
 ) -> Dict[str, Any]:
-
     client = create_client()
     req = dms_enterprise_20181101_models.CreateDataCorrectOrderRequest()
     req.comment = "Data correct order submitted by MCP"
@@ -395,7 +394,6 @@ async def create_data_change_order(
 async def get_order_base_info(
         order_id: str = Field(description="DMS order ID")
 ) -> Dict[str, Any]:
-
     client = create_client()
     req = dms_enterprise_20181101_models.GetOrderBaseInfoRequest()
     req.order_id = order_id
@@ -410,7 +408,6 @@ async def get_order_base_info(
 async def submit_order_approval(
         order_id: str = Field(description="DMS order ID")
 ) -> Dict[str, Any]:
-
     client = create_client()
     req = dms_enterprise_20181101_models.SubmitOrderApprovalRequest()
     req.order_id = order_id
@@ -421,16 +418,21 @@ async def submit_order_approval(
         logger.error(f"Error in submit_order_approval: {e}")
         raise
 
+
 async def nl2sql(
         database_id: str = Field(description="DMS databaseId"),
         question: str = Field(description="Natural language question"),
-        knowledge: Optional[str] = Field(default=None, description="Additional context")
+        knowledge: Optional[str] = Field(default=None, description="Optional: additional context"),
+        model: Optional[str] = Field(default=None, description="Optional: if a specific model is desired, it can be specified here")
 ) -> SqlResult:
     client = create_client()
     req = dms_enterprise_20181101_models.GenerateSqlFromNLRequest(db_id=database_id, question=question)
-    if knowledge: req.knowledge = knowledge
+    if knowledge:
+        req.knowledge = knowledge
     if mcp.state.real_login_uid:
         req.real_login_user_uid = mcp.state.real_login_uid
+    if model:
+        req.model = model
     try:
         resp = client.generate_sql_from_nl(req)
         if not resp or not resp.body: return SqlResult(sql=None)
@@ -495,13 +497,15 @@ class ToolRegistry:
         async def create_data_change_order_configured(
                 script: str = Field(description="SQL script to execute")
         ) -> str:
-            result_obj = await create_data_change_order(database_id=self.default_database_id, script=script, logic=False)
+            result_obj = await create_data_change_order(database_id=self.default_database_id, script=script,
+                                                        logic=False)
             return str(result_obj)
 
         self.mcp.tool(name="getOrderInfo", description="Retrieve order information from DMS using the order ID.",
                       annotations={"title": "获取DMS工单详情", "readOnlyHint": True})(get_order_base_info)
 
-        self.mcp.tool(name="submitOrderApproval", description="Submit the order for approval in DMS using the order ID.",
+        self.mcp.tool(name="submitOrderApproval",
+                      description="Submit the order for approval in DMS using the order ID.",
                       annotations={"title": "提交工单审批", "readOnlyHint": False})(submit_order_approval)
 
         @self.mcp.tool(name="askDatabase",
@@ -511,10 +515,11 @@ class ToolRegistry:
                 question: str = Field(
                     description="Your question in natural language about the pre-configured database."),
                 knowledge: Optional[str] = Field(default=None,
-                                                 description="Optional: Additional context to help formulate the SQL query.")
+                                                 description="Optional: additional context to help formulate the SQL query."),
+                model: Optional[str] = Field(default=None, description="Optional: if a specific model is desired, it can be specified here")
         ) -> AskDatabaseResult:
             sql_result_obj = await nl2sql(database_id=self.default_database_id, question=question,
-                                          knowledge=knowledge)
+                                          knowledge=knowledge, model=model)
             generated_sql = ""
             if not sql_result_obj or not sql_result_obj.sql:
                 logger.warning(f"Failed to generate SQL for question: {question} on preconfigured DB.")
@@ -600,7 +605,8 @@ class ToolRegistry:
         self.mcp.tool(name="getOrderInfo", description="Retrieve order information from DMS using the order ID.",
                       annotations={"title": "获取DMS工单详情", "readOnlyHint": True})(get_order_base_info)
 
-        self.mcp.tool(name="submitOrderApproval", description="Submit the order for approval in DMS using the order ID.",
+        self.mcp.tool(name="submitOrderApproval",
+                      description="Submit the order for approval in DMS using the order ID.",
                       annotations={"title": "提交工单审批", "readOnlyHint": False})(submit_order_approval)
 
         self.mcp.tool(name="generateSql", description="Generate SELECT-type SQL queries from natural language input.",
