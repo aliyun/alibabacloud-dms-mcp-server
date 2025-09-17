@@ -43,6 +43,9 @@ class InstanceDetail(MyBaseModel):
     Port: Any = Field(description="The connection port number", default=None)
     InstanceSource: Any = Field(description="The instance source (e.g., RDS, VPC_IDC, ECS_OWN, PUBLIC_OWN etc.)",
                                 default=None)
+    InstanceResourceId: Any = Field(
+        description="Resource ID of the instance from RDS",
+        default=None)
 
 
 class DatabaseInfo(MyBaseModel):
@@ -179,6 +182,8 @@ async def get_instance(
     try:
         resp = client.get_instance(req)
         instance_data = resp.body.to_map().get('Instance', {}) if resp and resp.body else {}
+        instance_data['InstanceResourceId'] = instance_data.pop('EcsInstanceId', None)
+
         return InstanceDetail(**instance_data)
     except Exception as e:
         logger.error(f"Error in get_instance: {e}")
@@ -218,7 +223,12 @@ async def list_instance(
         # 检查是否为空
         if not isinstance(instances, list) or not instances:
             return []
-        return [InstanceDetail(**item) for item in instances]
+
+        processed_instances = [
+            {**item, 'InstanceResourceId': item.pop('EcsInstanceId', None)}
+            for item in instances
+        ]
+        return [InstanceDetail(**item) for item in processed_instances]
     except Exception as e:
         logger.error(f"Error in list_instance: {e}")
         raise
