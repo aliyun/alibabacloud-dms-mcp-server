@@ -134,7 +134,7 @@ sdist = { url = "https://files.pythonhosted.org/packages/a0/87/1d7019d23891897cb
 
 [[package]]
 name = "alibabacloud-dms-enterprise20181101"
-version = "1.75.0"
+version = "1.76.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "alibabacloud-endpoint-util" },
@@ -142,14 +142,14 @@ dependencies = [
     { name = "alibabacloud-tea-openapi" },
     { name = "alibabacloud-tea-util" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/2b/39/65f9188313fe6a712ab260cdf65c2f1b4685d5ff951a28e88a932b6357c8/alibabacloud_dms-enterprise20181101-1.75.0.tar.gz", hash = "sha256:8392b69eae1ada50316ab59eabc112faba19ec8a694bc6e3e9bfaba789d30337", size = 282496 }
+sdist = { url = "https://files.pythonhosted.org/packages/a6/79/7279bc61e64502e1a6724a237d84368cd37b6a68075349353ef177cb022d/alibabacloud_dms-enterprise20181101-1.76.0.tar.gz", hash = "sha256:81db04de92ae1aae104f87a42fc2a9e9bc9a2e73313ff08d048eb64fcbc07c05", size = 284657 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e1/c1/19b78a558e7a69fcbcbe98e96c22cadc55568851a87c2c555c3224357c7c/alibabacloud_dms_enterprise20181101-1.75.0-py3-none-any.whl", hash = "sha256:73cdd15ed083276749343bcb0e77d8ba4441fae6df3fb63224b45d33417588cb", size = 284054 },
+    { url = "https://files.pythonhosted.org/packages/d1/5b/0bb8654d13ea2ad84675678ee631c7cccbe22ffe2f45205da933822ac4e8/alibabacloud_dms_enterprise20181101-1.76.0-py3-none-any.whl", hash = "sha256:f01579e73583356aedfa0c188ce5fbb40b1d52ddbb83a82350ae000c772777dd", size = 286202 },
 ]
 
 [[package]]
 name = "alibabacloud-dms-mcp-server"
-version = "0.1.15"
+version = "0.1.16"
 source = { editable = "." }
 dependencies = [
     { name = "alibabacloud-dms-enterprise20181101" },
@@ -169,7 +169,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "alibabacloud-dms-enterprise20181101", specifier = ">=1.75.0" },
+    { name = "alibabacloud-dms-enterprise20181101", specifier = ">=1.76.0" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "mcp", extras = ["cli"], specifier = ">=1.8.1" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.15.0" },

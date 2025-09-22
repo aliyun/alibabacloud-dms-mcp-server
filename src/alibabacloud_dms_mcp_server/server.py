@@ -118,6 +118,15 @@ class SqlResult(MyBaseModel):
     sql: Optional[str] = Field(description="The generated SQL query")
 
 
+DATABASE_ID_DESCRIPTION = (
+    "If you don't know the databaseId, first use getDatabase or searchDatabase to retrieve it.\n"
+    "(1) If you have the exact host, port, and database name, use getDatabase.\n"
+    "(2) If you only know the database name, use searchDatabase.\n"
+    "(3) If you don't know any information, ask the user to provide the necessary details.\n"
+    "Note: searchDatabase may return multiple databases. In this case, let the user choose which one to use."
+)
+
+
 # --- Aliyun Client Creation ---
 def create_client() -> dms_enterprise20181101Client:
     config = open_api_models.Config(
@@ -269,7 +278,7 @@ async def get_database(
 ) -> DatabaseDetail:
     client = create_client()
     req = dms_enterprise_20181101_models.GetDatabaseRequest(host=host, port=port, schema_name=schema_name)
-   
+
     if sid:
         req.sid = sid
     if mcp.state.real_login_uid:
@@ -433,7 +442,8 @@ async def nl2sql(
         database_id: str = Field(description="DMS databaseId"),
         question: str = Field(description="Natural language question"),
         knowledge: Optional[str] = Field(default=None, description="Optional: additional context"),
-        model: Optional[str] = Field(default=None, description="Optional: if a specific model is desired, it can be specified here")
+        model: Optional[str] = Field(default=None,
+                                     description="Optional: if a specific model is desired, it can be specified here")
 ) -> SqlResult:
     client = create_client()
     req = dms_enterprise_20181101_models.GenerateSqlFromNLRequest(db_id=database_id, question=question)
@@ -451,6 +461,79 @@ async def nl2sql(
         return SqlResult(sql=sql_content)
     except Exception as e:
         logger.error(f"Error in nl2sql_explicit_db: {e}")
+        raise
+
+
+async def answer_sql_syntax(
+        database_id: str = Field(description="DMS databaseId"),
+        question: str = Field(description="Natural language question"),
+        model: Optional[str] = Field(default=None,
+                                     description="Optional: if a specific model is desired, it can be specified here")
+) -> Dict[str, Any]:
+    client = create_client()
+    req = dms_enterprise_20181101_models.AnswerSqlSyntaxByMetaAgentRequest(db_id=database_id, query=question)
+    # if mcp.state.real_login_uid:
+    #     req.real_login_user_uid = mcp.state.real_login_uid
+    if model:
+        req.model = model
+    try:
+        resp = client.answer_sql_syntax_by_meta_agent(req)
+        if not resp or not resp.body:
+            return None
+        data = resp.body.to_map()
+        return data
+    except Exception as e:
+        logger.error(f"Error in ask_sql_syntax: {e}")
+        raise
+
+
+async def fix_sql_statement(
+        database_id: str = Field(description="DMS databaseId"),
+        question: Optional[str] = Field(default=None, description="Natural language question"),
+        sql: str = Field(description="The SQL that caused an error"),
+        error: str = Field(description="SQL error message"),
+        model: Optional[str] = Field(default=None,
+                                     description="Optional: if a specific model is desired, it can be specified here")
+) -> Dict[str, Any]:
+    client = create_client()
+    req = dms_enterprise_20181101_models.FixSqlByMetaAgentRequest(db_id=database_id, query=question, sql=sql,
+                                                                  error=error)
+    # if mcp.state.real_login_uid:
+    #     req.real_login_user_uid = mcp.state.real_login_uid
+    if model:
+        req.model = model
+    try:
+        resp = client.fix_sql_by_meta_agent(req)
+        if not resp or not resp.body:
+            return None
+        data = resp.body.to_map()
+        return data
+    except Exception as e:
+        logger.error(f"Error in fix_sql_statement: {e}")
+        raise
+
+
+async def optimize_sql(
+        database_id: str = Field(description="DMS databaseId"),
+        question: Optional[str] = Field(default=None, description="Natural language question"),
+        sql: str = Field(description="SQL statement"),
+        model: Optional[str] = Field(default=None,
+                                     description="Optional: if a specific model is desired, it can be specified here")
+) -> Any:
+    client = create_client()
+    req = dms_enterprise_20181101_models.OptimizeSqlByMetaAgentRequest(db_id=database_id, query=question, sql=sql)
+    # if mcp.state.real_login_uid:
+    #     req.real_login_user_uid = mcp.state.real_login_uid
+    if model:
+        req.model = model
+    try:
+        resp = client.optimize_sql_by_meta_agent(req)
+        if not resp or not resp.body:
+            return None
+        data = resp.body.to_map()
+        return data
+    except Exception as e:
+        logger.error(f"Error in optimize_sql: {e}")
         raise
 
 
@@ -526,7 +609,8 @@ class ToolRegistry:
                     description="Your question in natural language about the pre-configured database."),
                 knowledge: Optional[str] = Field(default=None,
                                                  description="Optional: additional context to help formulate the SQL query."),
-                model: Optional[str] = Field(default=None, description="Optional: if a specific model is desired, it can be specified here")
+                model: Optional[str] = Field(default=None,
+                                             description="Optional: if a specific model is desired, it can be specified here")
         ) -> AskDatabaseResult:
             sql_result_obj = await nl2sql(database_id=self.default_database_id, question=question,
                                           knowledge=knowledge, model=model)
@@ -546,6 +630,45 @@ class ToolRegistry:
                 logger.error(f"Error executing SQL for pre-configured DB: {e}")
                 return AskDatabaseResult(executed_sql=generated_sql,
                                          execution_result=f"Error: An issue occurred while executing the query: {str(e)}")
+
+        @self.mcp.tool(name="answerSqlSyntax",
+                       description="Answer syntax-related questions for the corresponding database engine ",
+                       annotations={"title": "SQL语法回答", "readOnlyHint": True, "destructiveHint": False})
+        async def answer_sql_syntax_configured(
+                question: str = Field(description="Natural language question"),
+                model: Optional[str] = Field(default=None,
+                                             description="Optional: if a specific model is desired, it can be specified here")
+        ) -> Dict[str, Any]:
+            result_obj = await answer_sql_syntax(database_id=self.default_database_id, question=question,
+                                                 model=model)
+            return result_obj
+
+        @self.mcp.tool(name="fixSql",
+                       description="Analyze and fix the SQL error based on the provided SQL statement and error message.",
+                       annotations={"title": "SQL修复", "readOnlyHint": True, "destructiveHint": False})
+        async def fix_sql_configured(
+                question: Optional[str] = Field(default=None, description="Natural language question"),
+                sql: str = Field(description="The SQL that caused an error"),
+                error: str = Field(description="SQL error message"),
+                model: Optional[str] = Field(default=None,
+                                             description="Optional: if a specific model is desired, it can be specified here")
+        ) -> Dict[str, Any]:
+            result_obj = await fix_sql_statement(database_id=self.default_database_id, question=question, sql=sql,
+                                                 error=error, model=model)
+            return result_obj
+
+        @self.mcp.tool(name="optimizeSql",
+                       description="Analyze and optimize SQL performance based on the provided SQL statement",
+                       annotations={"title": "SQL优化", "readOnlyHint": True, "destructiveHint": False})
+        async def optimize_sql_configured(
+                question: Optional[str] = Field(default=None, description="Natural language question"),
+                sql: str = Field(description="SQL statement"),
+                model: Optional[str] = Field(default=None,
+                                             description="Optional: if a specific model is desired, it can be specified here")
+        ) -> Any:
+            result_obj = await optimize_sql(database_id=self.default_database_id, question=question, sql=sql,
+                                            model=model)
+            return result_obj
 
     def _register_full_toolset(self):
         self.mcp.tool(name="addInstance",
@@ -567,12 +690,8 @@ class ToolRegistry:
                       description="Obtain detailed information about a specific database in DMS when the host and port are provided.",
                       annotations={"title": "获取DMS数据库详情", "readOnlyHint": True})(get_database)
         self.mcp.tool(name="listTables",
-                      description="Search for tables by databaseId and (optional) table name. "
-                                  "If you don't know the databaseId, first use getDatabase or searchDatabase to retrieve it."
-                                  "(1)If you have the exact host, port, and database name, use getDatabase."
-                                  "(2)If you only know the database name, use searchDatabase."
-                                  "(3)If you don't know any information, ask the user to provide the necessary details."
-                                  "Note: searchDatabase may return multiple databases. In this case, let the user choose which one to use.",
+                      description=f"Search for tables by databaseId and (optional) table name. "
+                                  f"{DATABASE_ID_DESCRIPTION}",
                       annotations={"title": "列出DMS表", "readOnlyHint": True})(list_tables)
         self.mcp.tool(name="getTableDetailInfo",
                       description="Retrieve detailed metadata information about a specific database table including "
@@ -580,12 +699,8 @@ class ToolRegistry:
                       annotations={"title": "获取DMS表详细信息", "readOnlyHint": True})(get_meta_table_detail_info)
 
         @self.mcp.tool(name="executeScript",
-                       description="Execute SQL script against a database in DMS and return structured results."
-                                   "If you don't know the databaseId, first use getDatabase or searchDatabase to retrieve it."
-                                   "(1)If you have the exact host, port, and database name, use getDatabase."
-                                   "(2)If you only know the database name, use searchDatabase."
-                                   "(3)If you don't know any information, ask the user to provide the necessary details."
-                                   "Note: searchDatabase may return multiple databases. In this case, let the user choose which one to use.",
+                       description=f"Execute SQL script against a database in DMS and return structured results."
+                                   f"{DATABASE_ID_DESCRIPTION}",
                        annotations={"title": "在DMS中执行SQL脚本", "readOnlyHint": False, "destructiveHint": True})
         async def execute_script_full_wrapper(
                 database_id: str = Field(description="Required DMS databaseId. Obtained via getDatabase tool"),
@@ -596,13 +711,10 @@ class ToolRegistry:
             return str(result_obj)
 
         @self.mcp.tool(name="createDataChangeOrder",
-                       description="Execute SQL changes through a data change order, and a corresponding order ID will be returned. "
-                                   "Prefer using the executeScript tool for SQL execution; only use this tool when explicitly instructed to perform the operation via a order."
-                                   "If you don't know the databaseId, first use getDatabase or searchDatabase to retrieve it."
-                                   "(1)If you have the exact host, port, and database name, use getDatabase."
-                                   "(2)If you only know the database name, use searchDatabase."
-                                   "(3)If you don't know any information, ask the user to provide the necessary details."
-                                   "Note: searchDatabase may return multiple databases. In this case, let the user choose which one to use.",
+                       description=f"Execute SQL changes through a data change order, and a corresponding order ID will be returned. "
+                                   f"Prefer using the executeScript tool for SQL execution;"
+                                   f"only use this tool when explicitly instructed to perform the operation via a order."
+                                   f"{DATABASE_ID_DESCRIPTION}",
                        annotations={"title": "在DMS中创建数据变更工单", "readOnlyHint": False, "destructiveHint": True})
         async def create_data_change_order_wrapper(
                 database_id: str = Field(description="Required DMS databaseId. Obtained via getDatabase tool"),
@@ -621,6 +733,19 @@ class ToolRegistry:
 
         self.mcp.tool(name="generateSql", description="Generate SELECT-type SQL queries from natural language input.",
                       annotations={"title": "自然语言转SQL (DMS)", "readOnlyHint": True})(nl2sql)
+        self.mcp.tool(name="fixSql", description=f"Analyze and fix the SQL error based on the provided "
+                                                 f"SQL statement, error message, and database ID."
+                                                 f"{DATABASE_ID_DESCRIPTION}",
+                      annotations={"title": "SQL修复", "readOnlyHint": True})(fix_sql_statement)
+        self.mcp.tool(name="answerSqlSyntax", description=f"Answer syntax-related questions "
+                                                          f"for the corresponding database engine "
+                                                          f"based on the database ID."
+                                                          f"{DATABASE_ID_DESCRIPTION}",
+                      annotations={"title": "SQL语法回答", "readOnlyHint": True})(answer_sql_syntax)
+        self.mcp.tool(name="optimizeSql", description=f"Analyze and optimize SQL performance "
+                                                      f"based on the provided SQL statement and database ID"
+                                                      f"{DATABASE_ID_DESCRIPTION}",
+                      annotations={"title": "SQL优化", "readOnlyHint": True})(optimize_sql)
 
 
 # --- Lifespan Function ---
