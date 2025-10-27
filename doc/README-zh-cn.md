@@ -96,21 +96,24 @@ CONNECTION_STRING = ecommerce@10.20.30.40:3306
 ---
 
 ## 工具清单
-| 工具名称           | 描述                            | 适用模式                |
-|------------------|-------------------------------|----------------------|
-| addInstance      | 将阿里云实例添加到 DMS。                | 多实例模式              |
-| listInstances      | 搜索DMS中的实例列表。 | 多实例模式              |
-| getInstance      | 根据 host 和 port 获取实例详细信息。      | 多实例模式              |
-| searchDatabase    | 根据 schemaName 搜索数据库。          | 多实例模式              |
-| getDatabase      | 获取特定数据库的详细信息。                 | 多实例模式              |
-| listTable        | 搜索指定数据库下的数据表。                 | 多实例模式 & 单数据库模式 |
-| getTableDetailInfo | 获取特定数据库表的详细信息。                | 多实例模式 & 单数据库模式 |
-| executeScript    | 执行 SQL 脚本并返回结果。               | 多实例模式 & 单数据库模式 |
-| nl2sql           | 将自然语言问题转换为 SQL 查询。            | 多实例模式              |
-| askDatabase      | 自然语言查询数据库（NL2SQL + 执行 SQL）。   | 单数据库模式            |
-| configureDtsJob  | 配置DTS迁移任务                     | 多实例模式              |
-| startDtsJob      | 启动DTS迁移任务                     | 多实例模式              |
-| getDtsJob        | 查看DTS迁移任务详情                   | 多实例模式              |
+| 工具名称               | 描述                         | 适用模式                |
+|--------------------|----------------------------|----------------------|
+| addInstance        | 将阿里云实例添加到 DMS              | 多实例模式              |
+| listInstances      | 搜索DMS中的实例列表                | 多实例模式              |
+| getInstance        | 根据 host 和 port 获取实例详细信息    | 多实例模式              |
+| searchDatabase     | 根据 schemaName 搜索数据库        | 多实例模式              |
+| getDatabase        | 获取特定数据库的详细信息               | 多实例模式              |
+| listTable          | 搜索指定数据库下的数据表               | 多实例模式 & 单数据库模式 |
+| getTableDetailInfo | 获取特定数据库表的详细信息              | 多实例模式 & 单数据库模式 |
+| executeScript      | 执行 SQL 脚本并返回结果             | 多实例模式 & 单数据库模式 |
+| createDataChangeOrder      | 创建数据变更工单                   | 多实例模式 & 单数据库模式 |
+| getOrderInfo      | 获取工单详情                     | 多实例模式 & 单数据库模式 |
+| submitOrderApproval      | 提交工单审批                     | 多实例模式 & 单数据库模式 |
+| generateSql        | 将自然语言问题转换为 SQL 查询          | 多实例模式              |
+| askDatabase        | 自然语言查询数据库（NL2SQL + 执行 SQL） | 单数据库模式            |
+| fixSql    | SQL修复                      | 多实例模式 & 单数据库模式              |
+| answerSqlSyntax        | SQL语法回答                    | 多实例模式 & 单数据库模式              |
+| optimizeSql          | SQL优化                      | 多实例模式 & 单数据库模式              |
 
 <p> 详细工具列表请查阅：<a href="/doc/Tool-List-cn.md">工具清单</a><br></p>
 
