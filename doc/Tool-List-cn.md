@@ -54,11 +54,25 @@
 - **database_id** (字符串, 必需): DMS 数据库 ID，可通过 getDatabase 工具获取。
 - **script** (字符串, 必需): 要执行的 SQL 脚本内容。
 
+#### createDataChangeOrder：在 DMS 中创建数据变更工单。
+
+- **database_id** (字符串, 必需): DMS 数据库 ID，可通过 getDatabase 工具获取。
+- **script** (字符串, 必需): 要执行的 SQL 脚本内容。
+
+#### getOrderInfo：获取 DMS 工单详情。
+
+- **order_id** (字符串, 必需): DMS 中的工单ID。
+
+#### submitOrderApproval：提交 DMS 工单审批。
+
+- **order_id** (字符串, 必需): DMS 中的工单ID。
+
+
 ---
 
 ### NL2SQL 相关
 
-#### nl2sql：将自然语言问题转换为可执行的 SQL 查询。
+#### generateSql：将自然语言问题转换为可执行的 SQL 查询。
 
 - **question** (字符串, 必需): 需要转换为 SQL 的自然语言问题。
 - **database_id** (整数, 必需): DMS 数据库 ID，可通过 getDatabase 工具获取。
@@ -66,40 +80,33 @@
 - **model** (字符串, 可选): 指定的大模型类型，目前可使用通义千问系列的模型。
 
 
-#### askDatabase: 通过自然语言问题直接获取数据库执行结果
+#### askDatabase: 通过自然语言问题直接获取数据库执行结果。
 - **question** (字符串, 必需): 需要转换为 SQL 的自然语言问题。
 - **knowledge** (字符串, 可选): 用于辅助 SQL 生成的额外上下文或数据库知识。
 - **model** (字符串, 可选): 指定的大模型类型，目前可使用通义千问系列的模型。
 
 ---
-### 数据迁移相关
 
-#### configureDtsJob: 配置 DTS 数据迁移任务，将一个 RDS-MySQL 中的数据迁移到另外一个 RDS-MySQL 中。
-- **region_id** (字符串, 必需): 实例所在的区域（例如：杭州 `"cn-hangzhou"`，北京 `"cn-beijing"`）。
-- **job_type** (字符串, 必需): DTS 任务类型（例如：同步任务 `"SYNC"`，迁移任务 `"MIGRATION"`）。
-- **source_endpoint_region** (字符串, 必需): 源数据库所在的区域（例如：杭州 `"cn-hangzhou"`，北京 `"cn-beijing"`）。
-- **source_endpoint_instance_type** (字符串, 必需): 源数据库实例类型（例如：`"RDS"`）。
-- **source_endpoint_engine_name** (字符串, 必需): 源数据库引擎类型（例如：`"MySQL"`）。
-- **source_endpoint_instance_id** (字符串, 必需): 源数据库实例 ID（例如：`"rm-xxx"`）。
-- **source_endpoint_user_name** (字符串, 必需): 源数据库连接用户名。
-- **source_endpoint_password** (字符串, 必需): 源数据库连接密码。
-- **destination_endpoint_region** (字符串, 必需): 目标数据库所在的区域（例如：杭州 `"cn-hangzhou"`，北京 `"cn-beijing"`）。
-- **destination_endpoint_instance_type** (字符串, 必需): 目标数据库实例类型（例如：`"RDS"`）。
-- **destination_endpoint_engine_name** (字符串, 必需): 目标数据库引擎类型（例如：`"MySQL"`）。
-- **destination_endpoint_instance_id** (字符串, 必需): 目标数据库实例 ID（例如：`"rm-xxx"`）。
-- **destination_endpoint_user_name** (字符串, 必需): 目标数据库连接用户名。
-- **destination_endpoint_password** (字符串, 必需): 目标数据库连接密码。
-- **db_list** (字符串, 必需): 迁移对象，JSON 字符串格式：
-  示例1：迁移 `dtstest` 数据库，`db_list` 为 `{"dtstest":{"name":"dtstest","all":true}}`；
-  示例2：迁移 `dtstest` 数据库下的 `task01` 表，`db_list` 为 `{"dtstest":{"name":"dtstest","all":false,"Table":{"task01":{"name":"task01","all":true}}}}`；
-  示例3：迁移 `dtstest` 数据库下的 `task01`、`task02` 表，`db_list` 为 `{"dtstest":{"name":"dtstest","all":false,"Table":{"task01":{"name":"task01","all":true},"task02":{"name":"task02","all":true}}}}`。
+### SQL助手 相关
 
-#### startDtsJob: 启动 DTS 迁移任务。
-- **region_id** (字符串, 必需): 实例所在的区域（例如：杭州 `"cn-hangzhou"`，北京 `"cn-beijing"`）。
-- **dts_job_id** (字符串, 必需): DTS 任务 ID。
+#### fixSql：SQL修复。
 
-#### getDtsJob: 获取 DTS 迁移任务详情信息。
-- **region_id** (字符串, 必需): 实例所在的区域（例如：杭州 `"cn-hangzhou"`，北京 `"cn-beijing"`）。
-- **dts_job_id** (字符串, 必需): DTS 任务 ID。
+- **database_id** (整数, 必需): DMS 数据库 ID，可通过 getDatabase 工具获取。
+- **sql** (字符串, 必需): 需要修复的SQL。
+- **error** (字符串, 必需): SQL的报错信息。
+- **question** (字符串, 可选): 辅助描述信息。
+- **model** (字符串, 可选): 指定的大模型类型，目前可使用通义千问系列的模型。
 
----
+
+#### answerSqlSyntax：SQL语法回答。
+
+- **database_id** (整数, 必需): DMS 数据库 ID，可通过 getDatabase 工具获取。
+- **question** (字符串, 必需): 问题。
+- **model** (字符串, 可选): 指定的大模型类型，目前可使用通义千问系列的模型。
+
+#### optimizeSql：SQL优化。
+
+- **database_id** (整数, 必需): DMS 数据库 ID，可通过 getDatabase 工具获取。
+- **sql** (字符串, 必需): 待优化的SQL。
+- **question** (字符串, 可选): 辅助描述信息。
+- **model** (字符串, 可选): 指定的大模型类型，目前可使用通义千问系列的模型。

@@ -55,6 +55,19 @@
 - **database_id** (string, required): DMS database ID (obtained via getDatabase).
 - **script** (string, required): SQL script content to execute.
 
+#### createDataChangeOrder: Create a data change ticket in DMS.
+
+- **database_id** (string, required): DMS database ID (obtained via getDatabase).
+- **script** (string, required): SQL script content to execute.
+
+#### getOrderInfo: Retrieve DMS ticket details.
+
+- **order_id** (string, required):The ticket ID in DMS.
+
+#### submitOrderApproval: Submit a DMS ticket for approval.
+
+- **order_id** (string, required):The ticket ID in DMS.
+
 ---
 
 ### NL2SQL Related
@@ -64,38 +77,36 @@
 - **question** (string, required): Natural language question to convert into SQL.
 - **database_id** (integer, required): DMS database ID (obtained via getDatabase).
 - **knowledge** (string, optional): Additional context or database knowledge to assist SQL generation.
+- **model** (string, optional): The specified large language model type; currently supports Qwen series models.
 
-#### askDatabase: Retrieve database execution results directly using natural language questions  
+
+#### askDatabase: Retrieve database execution results directly using natural language questions.
 - **question** (string, required): The natural language question to be converted into SQL.  
 - **knowledge** (string, optional): Additional context or database knowledge used to assist in SQL generation.
+- **model** (string, optional): The specified large language model type; currently supports Qwen series models.
 
 ---
-### Data Migration Related
 
-#### configureDtsJob: Configure a DTS data migration task that migrates data from one RDS-MySQL instance to another RDS-MySQL instance.
-- **region_id** (string, required): The region where the instance is located (e.g., Hangzhou `"cn-hangzhou"`, Beijing `"cn-beijing"`).
-- **job_type** (string, required): The type of DTS job (e.g., synchronization job `"SYNC"`, migration job `"MIGRATION"`).
-- **source_endpoint_region** (string, required): The region where the source database is located (e.g., Hangzhou `"cn-hangzhou"`, Beijing `"cn-beijing"`).
-- **source_endpoint_instance_type** (string, required): The type of source database instance (e.g., `"RDS"`).
-- **source_endpoint_engine_name** (string, required): The engine type of the source database (e.g., `"MySQL"`).
-- **source_endpoint_instance_id** (string, required): The ID of the source database instance (e.g., `"rm-xxx"`).
-- **source_endpoint_user_name** (string, required): The username for connecting to the source database.
-- **source_endpoint_password** (string, required): The password for connecting to the source database.
-- **destination_endpoint_region** (string, required): The region where the destination database is located (e.g., Hangzhou `"cn-hangzhou"`, Beijing `"cn-beijing"`).
-- **destination_endpoint_instance_type** (string, required): The type of destination database instance (e.g., `"RDS"`).
-- **destination_endpoint_engine_name** (string, required): The engine type of the destination database (e.g., `"MySQL"`).
-- **destination_endpoint_instance_id** (string, required): The ID of the destination database instance (e.g., `"rm-xxx"`).
-- **destination_endpoint_user_name** (string, required): The username for connecting to the destination database.
-- **destination_endpoint_password** (string, required): The password for connecting to the destination database.
-- **db_list** (string, required): The migration object in JSON string format:
-  Example 1: Migrate the `dtstest` database, and set `db_list` to `{"dtstest":{"name":"dtstest","all":true}}`;
-  Example 2: Migrate the `task01` table under the `dtstest` database, and set `db_list` to `{"dtstest":{"name":"dtstest","all":false,"Table":{"task01":{"name":"task01","all":true}}}}`;
-  Example 3: Migrate the `task01` and `task02` tables under the `dtstest` database, and set `db_list` to `{"dtstest":{"name":"dtstest","all":false,"Table":{"task01":{"name":"task01","all":true},"task02":{"name":"task02","all":true}}}}`.
+### SQL Assistant Related
 
-#### startDtsJob: Start a DTS migration task.
-- **region_id** (string, required): The region where the instance is located (e.g., Hangzhou `"cn-hangzhou"`, Beijing `"cn-beijing"`).
-- **dts_job_id** (string, required): The DTS job ID.
+#### fixSql：SQL Repair.
 
-#### getDtsJob: Get detailed information about a DTS migration task.
-- **region_id** (string, required): The region where the instance is located (e.g., Hangzhou `"cn-hangzhou"`, Beijing `"cn-beijing"`).
-- **dts_job_id** (string, required): The DTS job ID.
+- **database_id** (integer, required):  DMS database ID (obtained via getDatabase).
+- **sql** (string, required): The SQL statement to be repaired.
+- **error** (string, required): The error message associated with the SQL.
+- **question**  (string, optional): Supplementary descriptive information.
+- **model** (string, optional): The specified large language model type; currently supports Qwen series models.
+
+
+#### answerSqlSyntax：SQL Syntax Response.
+
+- **database_id** (integer, required): DMS database ID (obtained via getDatabase).
+- **question** (string, required): The question.
+- **model** (string, optional): The specified large language model type; currently supports Qwen series models.
+
+#### optimizeSql：SQL Optimization.
+
+- **database_id** (integer, required): DMS database ID, which can be obtained via the getDatabase tool.
+- **sql** (string, required): The SQL statement to be optimized.
+- **question** question (string, optional): Supplementary descriptive information.
+- **model** (string, optional): The specified large language model type; currently supports Qwen series models.
