@@ -135,7 +135,7 @@ def create_client() -> dms_enterprise20181101Client:
         security_token=os.getenv('ALIBABA_CLOUD_SECURITY_TOKEN'),
         read_timeout=60 * 1000  # 设置读取超时时间为60秒
     )
-    config.endpoint = f'dms-enterprise.cn-hangzhou.aliyuncs.com'
+    config.endpoint = os.getenv('ALIBABA_CLOUD_DMS_ENDPOINT', 'dms-enterprise.cn-hangzhou.aliyuncs.com')
     config.user_agent = "dms-mcp"
     return dms_enterprise20181101Client(config)
 
@@ -333,14 +333,28 @@ async def get_meta_table_detail_info(
 
 
 def _format_as_markdown_table(column_names: List[str], rows: List[Dict[str, Any]]) -> str:
-    if not column_names: return ""
-    header = "| " + " | ".join(column_names) + " |"
-    separator = "| " + " | ".join(["---"] * len(column_names)) + " |"
-    table_rows_str = [header, separator]
-    for row_data in rows:
-        row_values = [str(row_data.get(col, "")) for col in column_names]
-        table_rows_str.append("| " + " | ".join(row_values) + " |")
-    return "\n".join(table_rows_str)
+
+    if column_names:
+        header = "| " + " | ".join(str(c) for c in column_names) + " |"
+        separator = "| " + " | ".join(["---"] * len(column_names)) + " |"
+        table_rows_str = [header, separator]
+        for row_data in rows:
+            row_values = [str(row_data.get(col, "")) for col in column_names]
+            table_rows_str.append("| " + " | ".join(row_values) + " |")
+        return "\n".join(table_rows_str)
+    if not rows:
+        return "Success."
+    else:
+        all_keys = set()
+        for r in rows:
+            all_keys.update(r.keys())
+        if all_keys:
+            fallback_columns = sorted(all_keys)
+            return _format_as_markdown_table(fallback_columns, rows)
+        else:
+            return "No data returned."
+
+
 
 
 async def execute_script(
