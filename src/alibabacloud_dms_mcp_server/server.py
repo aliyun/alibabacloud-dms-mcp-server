@@ -913,7 +913,9 @@ mcp = FastMCP(
     "DatabaseManagementAssistant",
     lifespan=lifespan,
     instructions="Database Management Assistant (DMS) is a toolkit designed to assist users in managing and "
-                 "interacting with databases."
+                 "interacting with databases.",
+    host=os.getenv("SERVER_HOST", "0.0.0.0"),
+    port=int(os.getenv("SERVER_PORT", "8000"))
 )
 
 
