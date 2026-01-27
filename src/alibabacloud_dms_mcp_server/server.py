@@ -418,6 +418,8 @@ async def create_data_change_order(
     param.db_item_list = db_items
 
     req.param = param
+    if mcp.state.real_login_uid:
+        req.real_login_user_uid = mcp.state.real_login_uid
     try:
         resp = client.create_data_correct_order(req)
         return resp.body.to_map()
@@ -446,6 +448,8 @@ async def submit_order_approval(
     client = create_client()
     req = dms_enterprise_20181101_models.SubmitOrderApprovalRequest()
     req.order_id = order_id
+    if mcp.state.real_login_uid:
+        req.real_login_user_uid = mcp.state.real_login_uid
     try:
         resp = client.submit_order_approval(req)
         return resp.body.to_map()
