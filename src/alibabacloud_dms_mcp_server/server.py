@@ -396,11 +396,13 @@ async def execute_script(
 async def create_data_change_order(
         database_id: str = Field(description="DMS databaseId"),
         script: str = Field(description="SQL script to execute"),
-        logic: bool = Field(default=False, description="Whether to use logical execution mode")
+        logic: bool = Field(default=False, description="Whether to use logical execution mode"),
+        comment: Optional[str] = Field(default="Data correct order submitted by MCP", 
+                                       description="Business context for the data change order")
 ) -> Dict[str, Any]:
     client = create_client()
     req = dms_enterprise_20181101_models.CreateDataCorrectOrderRequest()
-    req.comment = "Data correct order submitted by MCP"
+    req.comment = comment
 
     param = dms_enterprise_20181101_models.CreateDataCorrectOrderRequestParam()
     param.estimate_affect_rows = 1
@@ -449,6 +451,25 @@ async def submit_order_approval(
         return resp.body.to_map()
     except Exception as e:
         logger.error(f"Error in submit_order_approval: {e}")
+        raise
+
+
+async def approve_order(
+        workflow_instance_id: int = Field(description="Approval workflow ID, can be obtained from getOrderInfo API"),
+        approval_type: str = Field(description="Approval action: AGREE (approve), CANCEL (cancel), REJECT (reject), TRANSFER (transfer), ADD_APPROVAL_NODE (add approval node)")
+) -> Dict[str, Any]:
+    client = create_client()
+    req = dms_enterprise_20181101_models.ApproveOrderRequest(
+        workflow_instance_id=workflow_instance_id,
+        approval_type=approval_type
+    )
+    if mcp.state.real_login_uid:
+        req.real_login_user_uid = mcp.state.real_login_uid
+    try:
+        resp = client.approve_order(req)
+        return resp.body.to_map()
+    except Exception as e:
+        logger.error(f"Error in approve_order: {e}")
         raise
 
 
@@ -602,10 +623,12 @@ class ToolRegistry:
                                    "only use this tool when explicitly instructed to perform the operation via a order.",
                        annotations={"title": "在DMS中创建数据变更工单", "readOnlyHint": False, "destructiveHint": True})
         async def create_data_change_order_configured(
-                script: str = Field(description="SQL script to execute")
+                script: str = Field(description="SQL script to execute"),
+                comment: Optional[str] = Field(default="Data correct order submitted by MCP",
+                                              description="Business context for the data change order")
         ) -> str:
             result_obj = await create_data_change_order(database_id=self.default_database_id, script=script,
-                                                        logic=False)
+                                                        logic=False, comment=comment)
             return str(result_obj)
 
         self.mcp.tool(name="getOrderInfo", description="Retrieve order information from DMS using the order ID.",
@@ -614,6 +637,10 @@ class ToolRegistry:
         self.mcp.tool(name="submitOrderApproval",
                       description="Submit the order for approval in DMS using the order ID.",
                       annotations={"title": "提交工单审批", "readOnlyHint": False})(submit_order_approval)
+
+        self.mcp.tool(name="approveOrder",
+                      description="Approve or reject an order in DMS. The workflow_instance_id can be obtained from getOrderInfo.",
+                      annotations={"title": "审批工单", "readOnlyHint": False})(approve_order)
 
         @self.mcp.tool(name="askDatabase",
                        description="Ask a question in natural language to the pre-configured database and get results directly.",
@@ -733,9 +760,11 @@ class ToolRegistry:
         async def create_data_change_order_wrapper(
                 database_id: str = Field(description="Required DMS databaseId. Obtained via getDatabase tool"),
                 script: str = Field(description="SQL script to execute"),
-                logic: bool = Field(description="Whether to use logical execution mode", default=False)
+                logic: bool = Field(description="Whether to use logical execution mode", default=False),
+                comment: Optional[str] = Field(default="Data correct order submitted by MCP",
+                                              description="Business context for the data change order")
         ) -> str:  # Return string representation
-            result_obj = await create_data_change_order(database_id=database_id, script=script, logic=logic)
+            result_obj = await create_data_change_order(database_id=database_id, script=script, logic=logic, comment=comment)
             return str(result_obj)
 
         self.mcp.tool(name="getOrderInfo", description="Retrieve order information from DMS using the order ID.",
@@ -744,6 +773,10 @@ class ToolRegistry:
         self.mcp.tool(name="submitOrderApproval",
                       description="Submit the order for approval in DMS using the order ID.",
                       annotations={"title": "提交工单审批", "readOnlyHint": False})(submit_order_approval)
+
+        self.mcp.tool(name="approveOrder",
+                      description="Approve or reject an order in DMS. The workflow_instance_id can be obtained from getOrderInfo.",
+                      annotations={"title": "审批工单", "readOnlyHint": False})(approve_order)
 
         self.mcp.tool(name="generateSql", description="Generate SELECT-type SQL queries from natural language input.",
                       annotations={"title": "自然语言转SQL (DMS)", "readOnlyHint": True})(nl2sql)
