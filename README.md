@@ -97,14 +97,18 @@ Simply ask questions in natural language, and DMS MCP will parse the question in
 | getInstance        | Retrieves detailed information about an instance based on host and port.                                                  | Multi-instance Mode            |
 | searchDatabase     | Searches databases based on schemaName.                                                                                   | Multi-instance Mode            |
 | getDatabase        | Retrieves detailed information about a specific database.                                                                 | Multi-instance Mode            |
-| listTable          | Lists tables under a specified database.                                                                                  | Multi-instance Mode & Single Database Mode |
+| listTables          | Lists tables under a specified database.                                                                                  | Multi-instance Mode & Single Database Mode |
 | getTableDetailInfo | Retrieves detailed information about a specific table.                                                                    | Multi-instance Mode & Single Database Mode |
 | executeScript      | Executes an SQL script and returns the result.                                                                            | Multi-instance Mode & Single Database Mode |
-| nl2sql             | Converts natural language questions into SQL queries.                                                                     | Multi-instance Mode            |
+| createDataChangeOrder | Creates a data change order in DMS.                                                                                    | Multi-instance Mode & Single Database Mode |
+| getOrderInfo       | Retrieves order information from DMS.                                                                                     | Multi-instance Mode & Single Database Mode |
+| submitOrderApproval | Submits the order for approval in DMS.                                                                                   | Multi-instance Mode & Single Database Mode |
+| approveOrder       | Approves or rejects an order in DMS.                                                                                      | Multi-instance Mode & Single Database Mode |
+| generateSql        | Converts natural language questions into SQL queries.                                                                     | Multi-instance Mode            |
 | askDatabase        | Natural language querying of a database (NL2SQL + execute SQL).                                                           | Single Database Mode           |
-| configureDtsJob    | Configures a DTS migration task                                                                                           | Multi-instance Mode            |
-| startDtsJob        | Starts a DTS migration task                                                                                               | Multi-instance Mode            |
-| getDtsJob          | Views details of a DTS migration task                                                                                     | Multi-instance Mode            |
+| fixSql             | Analyzes and fixes SQL errors.                                                                                            | Multi-instance Mode & Single Database Mode |
+| answerSqlSyntax    | Answers SQL syntax-related questions.                                                                                     | Multi-instance Mode & Single Database Mode |
+| optimizeSql        | Analyzes and optimizes SQL performance.                                                                                   | Multi-instance Mode & Single Database Mode |
 
 <p> For a full list of tools, please refer to: <a href="/doc/Tool-List-en.md">Tool List</a><br></p>
 

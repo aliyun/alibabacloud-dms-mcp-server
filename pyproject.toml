@@ -1,6 +1,6 @@
 [project]
 name = "alibabacloud-dms-mcp-server"
-version = "0.1.18"
+version = "0.1.19"
 description = "MCP Server for AlibabaCloud DMS"
 readme = "README.md"
 authors = [
