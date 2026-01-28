@@ -10,7 +10,7 @@
 - **port** (string, optional): Connection port number of the instance.
 - **region** (string, optional): Region where the instance is located (e.g., "cn-hangzhou").
 
-#### listInstances：Search for instances from DMS.    
+#### listInstances:Search for instances from DMS.    
 
 - **search_key** (string, optional): Search key (e.g., instance host, instance alias, etc.)
 - **db_type** (string, optional): InstanceType, or called dbType (e.g., mysql, polardb, oracle, postgresql, sqlserver, polardb-pg, etc.)
@@ -35,7 +35,7 @@
 - **schema_name** (string, required): Database name.
 - **sid** (string, optional): Required for Oracle-like databases, defaults to None.
 
-#### listTable: Search for data tables in DMS based on databaseId and tableName.
+#### listTables: Search for data tables in DMS based on databaseId and tableName.
 
 - **database_id** (string, required): Database ID to limit the search scope (obtained via getDatabase).
 - **search_name** (string, optional): String as a search keyword to match table names.
@@ -54,11 +54,14 @@
 
 - **database_id** (string, required): DMS database ID (obtained via getDatabase).
 - **script** (string, required): SQL script content to execute.
+- **logic** (boolean, optional): Whether to use logical execution mode, default is False.
 
 #### createDataChangeOrder: Create a data change ticket in DMS.
 
 - **database_id** (string, required): DMS database ID (obtained via getDatabase).
 - **script** (string, required): SQL script content to execute.
+- **logic** (boolean, optional): Whether to use logical execution mode, default is False.
+- **comment** (string, optional): Business context for the data change order, default is "Data correct order submitted by MCP".
 
 #### getOrderInfo: Retrieve DMS ticket details.
 
@@ -68,14 +71,22 @@
 
 - **order_id** (string, required):The ticket ID in DMS.
 
+#### approveOrder: Approve or reject a DMS order.
+
+- **workflow_instance_id** (integer, required): Approval workflow ID, can be obtained from getOrderInfo API.
+- **approval_type** (string, required): Approval action type, available values:
+  - AGREE: Approve
+  - CANCEL: Cancel
+  - REJECT: Reject
+
 ---
 
 ### NL2SQL Related
 
-#### nl2sql: Convert natural language questions into executable SQL queries.
+#### generateSql: Convert natural language questions into executable SQL queries.
 
+- **database_id** (string, required): DMS database ID (obtained via getDatabase).
 - **question** (string, required): Natural language question to convert into SQL.
-- **database_id** (integer, required): DMS database ID (obtained via getDatabase).
 - **knowledge** (string, optional): Additional context or database knowledge to assist SQL generation.
 - **model** (string, optional): The specified large language model type; currently supports Qwen series models.
 
@@ -89,24 +100,24 @@
 
 ### SQL Assistant Related
 
-#### fixSql：SQL Repair.
+#### fixSql:SQL Repair.
 
-- **database_id** (integer, required):  DMS database ID (obtained via getDatabase).
+- **database_id** (string, required):  DMS database ID (obtained via getDatabase).
 - **sql** (string, required): The SQL statement to be repaired.
 - **error** (string, required): The error message associated with the SQL.
 - **question**  (string, optional): Supplementary descriptive information.
 - **model** (string, optional): The specified large language model type; currently supports Qwen series models.
 
 
-#### answerSqlSyntax：SQL Syntax Response.
+#### answerSqlSyntax:SQL Syntax Response.
 
-- **database_id** (integer, required): DMS database ID (obtained via getDatabase).
+- **database_id** (string, required): DMS database ID (obtained via getDatabase).
 - **question** (string, required): The question.
 - **model** (string, optional): The specified large language model type; currently supports Qwen series models.
 
-#### optimizeSql：SQL Optimization.
+#### optimizeSql:SQL Optimization.
 
-- **database_id** (integer, required): DMS database ID, which can be obtained via the getDatabase tool.
+- **database_id** (string, required): DMS database ID, which can be obtained via the getDatabase tool.
 - **sql** (string, required): The SQL statement to be optimized.
-- **question** question (string, optional): Supplementary descriptive information.
+- **question** (string, optional): Supplementary descriptive information.
 - **model** (string, optional): The specified large language model type; currently supports Qwen series models.

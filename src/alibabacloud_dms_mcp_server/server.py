@@ -460,7 +460,7 @@ async def submit_order_approval(
 
 async def approve_order(
         workflow_instance_id: int = Field(description="Approval workflow ID, can be obtained from getOrderInfo API"),
-        approval_type: str = Field(description="Approval action: AGREE (approve), CANCEL (cancel), REJECT (reject), TRANSFER (transfer), ADD_APPROVAL_NODE (add approval node)")
+        approval_type: str = Field(description="Approval action: AGREE (approve), CANCEL (cancel), REJECT (reject)")
 ) -> Dict[str, Any]:
     client = create_client()
     req = dms_enterprise_20181101_models.ApproveOrderRequest(
