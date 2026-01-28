@@ -460,13 +460,17 @@ async def submit_order_approval(
 
 async def approve_order(
         workflow_instance_id: int = Field(description="Approval workflow ID, can be obtained from getOrderInfo API"),
-        approval_type: str = Field(description="Approval action: AGREE (approve), CANCEL (cancel), REJECT (reject)")
+        approval_type: str = Field(description="Approval action: AGREE (approve), CANCEL (cancel), REJECT (reject)"),
+        comment: Optional[str] = Field(default="Order approved via MCP", 
+                                       description="Comment for the approval action")
 ) -> Dict[str, Any]:
     client = create_client()
     req = dms_enterprise_20181101_models.ApproveOrderRequest(
         workflow_instance_id=workflow_instance_id,
         approval_type=approval_type
     )
+    if comment:
+        req.comment = comment
     if mcp.state.real_login_uid:
         req.real_login_user_uid = mcp.state.real_login_uid
     try:
