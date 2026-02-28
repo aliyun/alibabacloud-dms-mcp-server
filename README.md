@@ -272,3 +272,56 @@ For any questions or suggestions, join the [Alibaba Cloud DMS MCP Group](https:/
 
 ## License
 This project is licensed under the Apache 2.0 License.
+
+---
+
+## Agent Skills (Independent of MCP)
+
+In addition to the MCP Server, this project also hosts **AI Agent skills** for DMS Enterprise. These skills enable any AI agent (Codex, ChatGPT, Cursor, etc.) to manage DMS resources directly via OpenAPI — no MCP protocol required.
+
+### Quick Start (Skills)
+
+1. Read the skill definition:  
+   [`skills/database/dms/alicloud-database-dms-enterprise/SKILL.md`](skills/database/dms/alicloud-database-dms-enterprise/SKILL.md)
+
+2. Discover available APIs:
+   ```bash
+   python3 skills/database/dms/alicloud-database-dms-enterprise/scripts/list_openapi_meta_apis.py
+   ```
+
+3. Configure AccessKey:
+   ```bash
+   export ALICLOUD_ACCESS_KEY_ID="your-ak"
+   export ALICLOUD_ACCESS_KEY_SECRET="your-sk"
+   export ALICLOUD_REGION_ID="cn-hangzhou"
+   ```
+
+### Skill Capabilities
+
+| Category | Operations |
+|---|---|
+| Instance Management | Register, list, update, delete database instances |
+| SQL Execution & Audit | Execute scripts, NL2SQL, SQL review & optimization |
+| Permission Management | Create permission orders, grant/revoke user permissions |
+| Data Security | Sensitive column identification, data masking, audit logs |
+| Task Orchestration | Create, execute, monitor task flows (DAG) |
+| Metadata Knowledge | Get/edit table business knowledge |
+
+### Prompt Examples
+
+See [`skills/examples/prompts/`](skills/examples/prompts/) for DMS scenario-based prompt templates:
+- Instance management & resource query
+- SQL execution & audit
+- Permission & security management
+- Task orchestration & data changes
+- API discovery & metadata
+
+### Skill Index
+
+<!-- SKILL_INDEX_BEGIN -->
+| Category | Skill | Description | Path |
+| --- | --- | --- | --- |
+| database/dms | alicloud-database-dms-enterprise | Manage Alibaba Cloud Data Management Service (DMS Enterprise) via OpenAPI. Use for database instance management, SQL audit, data security, task orchestration, sensitive data protection, permission management, and database operation workflows. | `skills/database/dms/alicloud-database-dms-enterprise` |
+<!-- SKILL_INDEX_END -->
+
+For agent-specific guidelines, see [`AGENTS.md`](AGENTS.md).
