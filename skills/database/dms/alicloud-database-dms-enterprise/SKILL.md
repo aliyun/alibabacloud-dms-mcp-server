@@ -214,7 +214,9 @@ access_key_secret = your-sk
 ## API 发现
 
 - 产品代码：`dms-enterprise`
-- 推荐 API 版本：`2018-11-01`
+- API 版本：
+  - **2018-11-01**（经典版，299 个 API）：实例管理、SQL 执行、权限管理、任务编排、数据安全等
+  - **2025-04-14**（新版，67 个 API）：Airflow 托管、数据湖库表管理、DataAgent 协作、自定义 Agent、Notebook 调度
 - 使用 OpenAPI 元数据端点列出 API 列表和获取 Schema（参见 references）。
 
 ## 常见操作映射
