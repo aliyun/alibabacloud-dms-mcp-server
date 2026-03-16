@@ -1,0 +1,4 @@
+interface:
+  display_name: "DAS Business Impact Report"
+  short_description: "DAS运维日报 with business impact analysis"
+  default_prompt: "Use $das-business-impact-report to generate DAS operations daily reports with business impact analysis by combining DAS运维日报 with Meta Agent data asset inventory."
