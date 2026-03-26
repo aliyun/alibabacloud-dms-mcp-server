@@ -1,0 +1,137 @@
+name: polardb-mysql-ops
+description: PolarDB MySQL版智能运维技能，支持CPU诊断、SQL优化等PolarDB MySQL专属功能
+
+parameters:
+  instance_id:
+    type: string
+    description: PolarDB MySQL实例ID
+    required: true
+  node_id:
+    type: string
+    description: 节点ID（必选，默认为主节点）
+    required: true
+  database:
+    type: string
+    description: 数据库名称
+    required: false
+  sql:
+    type: string
+    description: SQL语句
+    required: false
+  start_time:
+    type: string
+    description: 开始时间（ISO8601格式）
+    required: false
+  end_time:
+    type: string
+    description: 结束时间（ISO8601格式）
+    required: false
+  top_n:
+    type: string
+    description: 查询前N条记录
+    required: false
+
+operations:
+  - name: high_cpu_usage_real_time_diagnose_mysql
+    description: CPU实时诊断
+    parameters: [instance_id, node_id]
+  
+  - name: performance_diagnose_mysql
+    description: CPU使用率诊断
+    parameters: [instance_id, node_id, start_time, end_time]
+  
+  - name: mysql_query_optimization_advisor
+    description: SQL诊断优化
+    parameters: [instance_id, database, sql]
+  
+  - name: sql_slowlog_summary
+    description: 慢日志分析（TP）
+    parameters: [instance_id, node_id, start_time, end_time, top_n]
+  
+  - name: monitoring_indicator_query_tool
+    description: 监控指标查询
+    parameters: [instance_id, node_id]
+  
+  - name: important_performance_metrics_summary
+    description: 重要性能指标总结
+    parameters: [instance_id, node_id, start_time, end_time]
+  
+  - name: latest_deadlock_analysis
+    description: 最近死锁分析
+    parameters: [instance_id, node_id]
+  
+  - name: lock_analysis
+    description: 元数据锁和事务阻塞分析
+    parameters: [instance_id, node_id]
+  
+  - name: storage_analyze
+    description: 空间分析
+    parameters: [instance_id, node_id]
+  
+  - name: real_time_abnormal_session_identification
+    description: 异常会话识别
+    parameters: [instance_id, node_id]
+  
+  - name: memory_usage_anomaly_diagnosis
+    description: 内存异常诊断
+    parameters: [instance_id, node_id, start_time, end_time]
+  
+  - name: memory_usage_anomaly_identification
+    description: 内存异常识别
+    parameters: [instance_id]
+  
+  - name: auto_increment_usage_analyze
+    description: 自增ID溢出风险
+    parameters: [instance_id]
+  
+  - name: error_log_query_and_analysis
+    description: 错误日志分析
+    parameters: [instance_id, node_id, start_time, end_time]
+  
+  - name: query_the_instances_that_need_to_be_optimized
+    description: 待优化实例概览
+    parameters: [start_time, end_time]
+  
+  - name: list_instances
+    description: 实例信息查询
+    parameters: []
+  
+  - name: instance_topology_query_tool
+    description: 实例拓扑查询
+    parameters: [instance_id]
+  
+  - name: get_instance_config
+    description: 实例配置查询
+    parameters: [instance_id]
+  
+  - name: show_create_table
+    description: 查看建表语句
+    parameters: [instance_id, node_id, database, table]
+  
+  - name: security_describe_abnormal_events
+    description: 安全异常事件
+    parameters: []
+  
+  - name: security_baseline_change_analysis
+    description: 安全基线变化
+    parameters: [instance_id, start_time, end_time]
+  
+  - name: security_latest_baseline_analysis
+    description: 最新安全基线
+    parameters: []
+  
+  - name: security_sensitive_scan_lookup
+    description: 敏感数据发现
+    parameters: []
+  
+  - name: describe_global_security_risk_histogram
+    description: 全局安全风险趋势
+    parameters: [start_time, end_time]
+  
+  - name: describe_security_risk_histogram
+    description: 实例安全风险趋势
+    parameters: [instance_id, start_time, end_time]
+  
+  - name: describe_sql_security_alert_stats
+    description: 实例安全告警统计
+    parameters: [instance_id, start_time, end_time]

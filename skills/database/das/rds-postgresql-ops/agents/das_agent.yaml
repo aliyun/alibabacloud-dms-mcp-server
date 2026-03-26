@@ -1,0 +1,101 @@
+name: rds-postgresql-ops
+description: RDS PostgreSQL智能运维技能，支持SQL优化、空间分析等PostgreSQL专属功能
+
+parameters:
+  instance_id:
+    type: string
+    description: RDS PostgreSQL实例ID
+    required: true
+  node_id:
+    type: string
+    description: 节点ID（可选）
+    required: false
+  database:
+    type: string
+    description: 数据库名称
+    required: false
+  sql:
+    type: string
+    description: SQL语句
+    required: false
+  start_time:
+    type: string
+    description: 开始时间（ISO8601格式）
+    required: false
+  end_time:
+    type: string
+    description: 结束时间（ISO8601格式）
+    required: false
+  top_n:
+    type: string
+    description: 查询前N条记录
+    required: false
+  schema:
+    type: string
+    description: Schema名称（PG类需要）
+    required: false
+
+operations:
+  - name: mysql_query_optimization_advisor
+    description: SQL诊断优化
+    parameters: [instance_id, database, sql]
+  
+  - name: sql_slowlog_summary
+    description: 慢日志分析（TP）
+    parameters: [instance_id, node_id, start_time, end_time, top_n]
+  
+  - name: monitoring_indicator_query_tool
+    description: 监控指标查询
+    parameters: [instance_id, node_id]
+  
+  - name: important_performance_metrics_summary
+    description: 重要性能指标总结
+    parameters: [instance_id, node_id, start_time, end_time]
+  
+  - name: storage_analyze
+    description: 空间分析
+    parameters: [instance_id, node_id]
+  
+  - name: query_the_instances_that_need_to_be_optimized
+    description: 待优化实例概览
+    parameters: [start_time, end_time]
+  
+  - name: list_instances
+    description: 实例信息查询
+    parameters: []
+  
+  - name: instance_topology_query_tool
+    description: 实例拓扑查询
+    parameters: [instance_id]
+  
+  - name: get_instance_config
+    description: 实例配置查询
+    parameters: [instance_id]
+  
+  - name: show_create_table
+    description: 查看建表语句
+    parameters: [instance_id, node_id, database, table, schema]
+  
+  - name: security_describe_abnormal_events
+    description: 安全异常事件
+    parameters: []
+  
+  - name: security_latest_baseline_analysis
+    description: 最新安全基线
+    parameters: []
+  
+  - name: security_sensitive_scan_lookup
+    description: 敏感数据发现
+    parameters: []
+  
+  - name: describe_global_security_risk_histogram
+    description: 全局安全风险趋势
+    parameters: [start_time, end_time]
+  
+  - name: describe_security_risk_histogram
+    description: 实例安全风险趋势
+    parameters: [instance_id, start_time, end_time]
+  
+  - name: describe_sql_security_alert_stats
+    description: 实例安全告警统计
+    parameters: [instance_id, start_time, end_time]
