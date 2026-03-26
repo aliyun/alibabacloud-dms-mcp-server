@@ -1,4 +1,0 @@
-interface:
-  display_name: "Alibaba Cloud Database DMS Enterprise"
-  short_description: "DMS Enterprise database management workflows"
-  default_prompt: "Use $alicloud-database-dms-enterprise to complete this database/dms task on Alibaba Cloud."
