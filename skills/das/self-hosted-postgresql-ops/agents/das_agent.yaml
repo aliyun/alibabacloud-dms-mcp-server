@@ -1,0 +1,53 @@
+name: self-hosted-postgresql-ops
+description: 自建/他云PostgreSQL智能运维技能，支持SQL优化、空间分析等基础PostgreSQL功能
+
+parameters:
+  instance_id:
+    type: string
+    description: 自建PostgreSQL实例ID
+    required: true
+  node_id:
+    type: string
+    description: 节点ID（可选）
+    required: false
+  database:
+    type: string
+    description: 数据库名称
+    required: false
+  sql:
+    type: string
+    description: SQL语句
+    required: false
+  schema:
+    type: string
+    description: Schema名称（PG类需要）
+    required: false
+
+operations:
+  - name: mysql_query_optimization_advisor
+    description: SQL诊断优化
+    parameters: [instance_id, database, sql]
+  
+  - name: storage_analyze
+    description: 空间分析
+    parameters: [instance_id, node_id]
+  
+  - name: list_instances
+    description: 实例信息查询
+    parameters: []
+  
+  - name: show_create_table
+    description: 查看建表语句
+    parameters: [instance_id, node_id, database, table, schema]
+  
+  - name: security_describe_abnormal_events
+    description: 安全异常事件
+    parameters: []
+  
+  - name: security_latest_baseline_analysis
+    description: 最新安全基线
+    parameters: []
+  
+  - name: security_sensitive_scan_lookup
+    description: 敏感数据发现
+    parameters: []
