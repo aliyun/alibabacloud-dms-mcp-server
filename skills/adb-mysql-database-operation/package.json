@@ -1,0 +1,21 @@
+{
+  "name": "adb-mysql-database-operation-skill",
+  "version": "1.0.0",
+  "description": "阿里云 AnalyticDB MySQL 版数据库操作 Skill - 提供集群管理、资源组管理、数据库管理、网络管理、账号管理、安全管理、备份恢复、监控管理、SQL 诊断、空间分析等 10 大模块",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test.js"
+  },
+  "keywords": [
+    "aliyun",
+    "analyticdb",
+    "adb",
+    "mysql",
+    "database",
+    "openclaw",
+    "skill"
+  ],
+  "author": "OpenClaw",
+  "license": "MIT",
+  "dependencies": {}
+}

@@ -1,0 +1,45 @@
+{
+  "name": "rds-database-operation-skill",
+  "version": "1.0.0",
+  "description": "阿里云 RDS 数据库操作 Skill - 提供实例、账号、数据库、安全、网络、备份等 6 大章节 API 能力",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test.js",
+    "example": "node examples.js",
+    "lint": "eslint .",
+    "doc": "echo '查看 API_REFERENCE.md 获取完整 API 文档'"
+  },
+  "keywords": [
+    "aliyun",
+    "rds",
+    "database",
+    "mysql",
+    "postgresql",
+    "sqlserver",
+    "mariadb",
+    "cloud",
+    "skill",
+    "openclaw"
+  ],
+  "author": "OpenClaw",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/openclaw/openclaw/tree/main/workspace/skills/rds-database-operation"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "eslint": "^8.0.0"
+  },
+  "files": [
+    "index.js",
+    "examples.js",
+    "test.js",
+    "README.md",
+    "API_REFERENCE.md",
+    "SKILL.md"
+  ]
+}

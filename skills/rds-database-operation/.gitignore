@@ -1,0 +1,20 @@
+# 依赖
+node_modules/
+
+# 环境变量（包含敏感信息）
+.env
+
+# 日志
+*.log
+
+# 临时文件
+*.tmp
+*.temp
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 测试输出
+coverage/
+.nyc_output/

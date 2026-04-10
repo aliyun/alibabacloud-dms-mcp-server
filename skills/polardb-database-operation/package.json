@@ -1,0 +1,18 @@
+{
+  "name": "polardb-database-operation-skill",
+  "version": "1.0.0",
+  "description": "阿里云 PolarDB 数据库操作 Skill - 使用 V3 签名机制",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test-polardb.js"
+  },
+  "keywords": [
+    "aliyun",
+    "polardb",
+    "database",
+    "skill",
+    "openclaw"
+  ],
+  "author": "OpenClaw",
+  "license": "MIT"
+}

@@ -1,0 +1,21 @@
+{
+  "name": "lindorm-database-operation-skill",
+  "version": "1.0.0",
+  "description": "阿里云 Lindorm 数据库操作 Skill - 使用 V1 签名机制",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test.js",
+    "lint": "eslint ."
+  },
+  "keywords": [
+    "aliyun",
+    "lindorm",
+    "hitsdb",
+    "database",
+    "openclaw",
+    "skill"
+  ],
+  "author": "OpenClaw",
+  "license": "MIT",
+  "dependencies": {}
+}

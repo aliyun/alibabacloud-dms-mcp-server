@@ -1,0 +1,16 @@
+[project]
+name = "database-inspection-report"
+version = "1.0.0"
+description = "阿里云 DAS 实例巡检报告获取脚本"
+readme = "README.md"
+requires-python = ">=3.6"
+dependencies = [
+    "requests>=2.28.0",
+]
+
+[project.scripts]
+get-inspection-report = "get_inspection_report:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

@@ -1,0 +1,16 @@
+# 环境变量
+.env
+
+# Node modules
+node_modules/
+
+# 日志文件
+*.log
+
+# 临时文件
+*.tmp
+*.bak
+
+# OS files
+.DS_Store
+Thumbs.db
