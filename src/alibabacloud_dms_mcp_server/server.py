@@ -816,7 +816,7 @@ async def lifespan(app: FastMCP) -> AsyncGenerator[None, None]:
 
     # Initialize realLoginUid
     app.state.real_login_uid = None
-    uid = os.getenv("UID")
+    uid = os.getenv("DMS_REAL_LOGIN_UID") or os.getenv("UID")
     if uid:
         app.state.real_login_uid = uid
         logger.info(f"RealLoginUid environment variable found: {uid}")
