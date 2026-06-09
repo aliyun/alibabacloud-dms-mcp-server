@@ -282,5 +282,34 @@ git clone https://github.com/aliyun/alibabacloud-dms-mcp-server.git
 
 
 
+## 安全说明
+
+### 网络绑定
+
+本 MCP Server **仅绑定 `127.0.0.1`（本地回环地址）**，不支持远程网络访问。所有连接必须来自本机。此设计确保即使服务被意外启动，也不会暴露到网络中。
+
+### SQL 执行免责声明
+
+> **重要提示：本工具设计上提供完整的 SQL 执行能力，包括 SELECT、INSERT、UPDATE、DELETE 及 DDL 语句。**
+
+使用本 MCP Server，即表示您知悉并接受以下内容：
+
+1. **您需自行确保**所使用的 AK/SK（AccessKey）在阿里云 RAM 中配置了适当的最小权限。
+2. **强烈建议**为数据库实例开启 [DMS 安全托管模式](https://help.aliyun.com/zh/dms/user-guide/overview-of-instance-management)，该模式提供内置的 SQL 审核、风险识别和审批流程。
+3. **本项目维护者不对**因通过本工具执行 SQL 而导致的任何数据丢失、损坏或安全事件承担责任。
+4. **安全最佳实践**：
+   - 仅查询场景请使用只读 AK/SK
+   - 开启 DMS 细粒度权限管控
+   - 开启 SQL 审计日志以满足合规要求
+   - 定期轮换访问凭证
+
+### 安全设计
+
+- **无命令注入风险**：代码中不使用 `subprocess`、`os.system`、`eval()`、`exec()`，所有操作均通过阿里云 SDK 执行。
+- **无 SSRF 风险**：所有网络请求通过 SDK 发送至固定的阿里云端点（`dms-enterprise.cn-hangzhou.aliyuncs.com`），不会请求用户可控的 URL。
+- **输入验证**：搜索接口对输入长度进行校验，并拒绝包含潜在危险 SQL 模式的输入，防止非 SQL 执行接口的注入攻击。
+
+---
+
 ## License
 This project is licensed under the Apache 2.0 License.
