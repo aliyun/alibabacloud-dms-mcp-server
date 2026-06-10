@@ -270,6 +270,35 @@ For any questions or suggestions, join the [Alibaba Cloud DMS MCP Group](https:/
 [//]: # (<img src="http://dms-static.oss-cn-hangzhou.aliyuncs.com/mcp-readme/ding-en.jpg" alt="DingTalk" width="40%">)
 
 
+## Security
+
+### Network Binding
+
+This MCP Server **only binds to `127.0.0.1` (localhost)**. It does not support remote network access. All connections must originate from the local machine. This design ensures that even if the server is accidentally started, it will not be exposed to the network.
+
+### SQL Execution Disclaimer
+
+> **IMPORTANT: This tool is designed to provide full SQL execution capabilities, including SELECT, INSERT, UPDATE, DELETE, and DDL statements.**
+
+By using this MCP Server, you acknowledge and accept the following:
+
+1. **You are solely responsible** for ensuring that the AK/SK (AccessKey) used has appropriate, minimal permissions configured in Alibaba Cloud RAM.
+2. **It is strongly recommended** to enable [DMS Safe Hosting Mode](https://help.aliyun.com/zh/dms/user-guide/overview-of-instance-management) for your database instances, which provides built-in SQL review, risk identification, and approval workflows.
+3. **The maintainers of this project are not responsible** for any data loss, corruption, or security incidents resulting from SQL execution through this tool.
+4. **Best practices**:
+   - Use read-only AK/SK for query-only scenarios
+   - Enable DMS fine-grained permission control
+   - Enable SQL audit logging for compliance
+   - Regularly review and rotate access credentials
+
+### Security Design
+
+- **No command injection risk**: The codebase does not use `subprocess`, `os.system`, `eval()`, or `exec()`. All operations are performed through the Alibaba Cloud SDK.
+- **No SSRF risk**: All network requests are sent to a fixed Alibaba Cloud endpoint (`dms-enterprise.cn-hangzhou.aliyuncs.com`) via the SDK. No user-controlled URLs are fetched.
+- **Input validation**: Search interfaces validate input length and reject potentially dangerous SQL patterns to prevent injection through non-SQL-execution interfaces.
+
+---
+
 ## License
 This project is licensed under the Apache 2.0 License.
 

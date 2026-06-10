@@ -1,4 +1,5 @@
 import os
+import re
 import logging
 from contextlib import asynccontextmanager
 from collections.abc import AsyncGenerator
@@ -127,6 +128,28 @@ DATABASE_ID_DESCRIPTION = (
 )
 
 
+# --- Input Validation ---
+MAX_SEARCH_KEY_LENGTH = 256
+FORBIDDEN_SQL_PATTERNS = re.compile(
+    r"(--|;|\b(UNION\s+(ALL\s+)?SELECT|INSERT\s+INTO|UPDATE\s+\w+\s+SET|DELETE\s+FROM|DROP\s+(TABLE|DATABASE)|ALTER\s+TABLE|EXEC(UTE)?\s))",
+    re.IGNORECASE
+)
+
+
+def validate_search_input(value: Optional[str], field_name: str, max_length: int = MAX_SEARCH_KEY_LENGTH) -> Optional[str]:
+    """Validate search input to prevent SQL injection on non-SQL-execution interfaces."""
+    if not value:
+        return value
+    if len(value) > max_length:
+        raise ValueError(f"{field_name} exceeds maximum length of {max_length} characters")
+    if FORBIDDEN_SQL_PATTERNS.search(value):
+        raise ValueError(f"{field_name} contains potentially dangerous SQL patterns")
+    return value
+
+
+
+
+
 # --- Aliyun Client Creation ---
 def create_client() -> dms_enterprise20181101Client:
     config = open_api_models.Config(
@@ -208,6 +231,9 @@ async def list_instance(
         env_type: Optional[str] = Field(default=None,
                                         description="Optional instance environment type (e.g., product, dev, test, etc. )")
 ) -> List[InstanceDetail]:
+    validate_search_input(search_key, "search_key")
+    validate_search_input(db_type, "db_type", max_length=64)
+    validate_search_input(env_type, "env_type", max_length=64)
     client = create_client()
     req = dms_enterprise_20181101_models.ListInstancesRequest()
     if search_key:
@@ -248,6 +274,7 @@ async def search_database(
         page_number: int = Field(default=1, description="Page number (starting from 1)"),
         page_size: int = Field(default=200, description="Results per page (max 1000)")
 ) -> List[DatabaseInfo]:
+    validate_search_input(search_key, "search_key")
     client = create_client()
     req = dms_enterprise_20181101_models.SearchDatabaseRequest(search_key=search_key, page_number=page_number,
                                                                page_size=page_size)
@@ -276,6 +303,7 @@ async def get_database(
         schema_name: str = Field(description="Name of the database schema"),
         sid: Optional[str] = Field(default=None, description="Required for Oracle like databases")
 ) -> DatabaseDetail:
+    validate_search_input(schema_name, "schema_name", max_length=128)
     client = create_client()
     req = dms_enterprise_20181101_models.GetDatabaseRequest(host=host, port=port, schema_name=schema_name)
 
@@ -299,6 +327,7 @@ async def list_tables(  # Renamed from listTable to follow convention
         page_number: int = Field(default=1, description="Pagination page number"),
         page_size: int = Field(default=200, description="Results per page (max 200)")
 ) -> Dict[str, Any]:
+    validate_search_input(search_name, "search_name")
     if not search_name:
         search_name = "%"
     client = create_client()
@@ -955,7 +984,7 @@ mcp = FastMCP(
     lifespan=lifespan,
     instructions="Database Management Assistant (DMS) is a toolkit designed to assist users in managing and "
                  "interacting with databases.",
-    host=os.getenv("SERVER_HOST", "0.0.0.0"),
+    host="127.0.0.1",
     port=int(os.getenv("SERVER_PORT", "8000"))
 )
 
