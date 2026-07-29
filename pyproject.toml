@@ -10,7 +10,7 @@ requires-python = ">=3.10"
 dependencies = [
     "alibabacloud-dms-enterprise20181101>=1.76.0",
     "httpx>=0.28.1",
-    "mcp[cli]>=1.8.1",
+    "mcp[cli]>=1.8.1,<2.0.0",
 ]
 
 license = "Apache-2.0"
