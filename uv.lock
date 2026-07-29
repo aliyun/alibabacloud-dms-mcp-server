@@ -149,7 +149,7 @@ wheels = [
 
 [[package]]
 name = "alibabacloud-dms-mcp-server"
-version = "0.1.22"
+version = "0.1.23"
 source = { editable = "." }
 dependencies = [
     { name = "alibabacloud-dms-enterprise20181101" },
