@@ -1,0 +1,49 @@
+name: das-hot-cold-data-analysis
+description: 基于DAS企业版审计日志分析热数据和冷数据，提供Redis迁移建议
+
+parameters:
+  instance_id:
+    type: string
+    description: 数据库实例ID
+    required: true
+  database:
+    type: string
+    description: 数据库名称（可选，如不指定则分析所有数据库）
+    required: false
+  start_time:
+    type: string
+    description: 开始时间（ISO8601格式，默认30天前）
+    required: false
+  end_time:
+    type: string
+    description: 结束时间（ISO8601格式，默认当前时间）
+    required: false
+  threshold_reads:
+    type: integer
+    description: 热数据读取阈值（默认1000次/天）
+    required: false
+  threshold_writes:
+    type: integer
+    description: 热数据写入阈值（默认100次/天）
+    required: false
+
+operations:
+  - name: analyze_hot_cold_data
+    description: 分析热数据和冷数据
+    parameters: [instance_id, database, start_time, end_time, threshold_reads, threshold_writes]
+  
+  - name: get_audit_log_config
+    description: 获取审计日志配置状态
+    parameters: [instance_id]
+  
+  - name: get_meta_knowledge_info
+    description: 获取表知识信息（业务元数据）
+    parameters: [instance_id, database]
+  
+  - name: generate_redis_migration_plan
+    description: 生成Redis迁移方案
+    parameters: [instance_id, hot_tables]
+  
+  - name: check_das_enterprise_status
+    description: 检查DAS企业版开通状态
+    parameters: [instance_id]

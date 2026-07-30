@@ -1,0 +1,29 @@
+name: self-hosted-redis-ops
+description: 自建/他云Redis智能运维技能，支持基础Redis功能
+
+parameters:
+  instance_id:
+    type: string
+    description: 自建Redis实例ID
+    required: true
+  node_id:
+    type: string
+    description: 节点ID（可选）
+    required: false
+
+operations:
+  - name: list_instances
+    description: 实例信息查询
+    parameters: []
+  
+  - name: security_describe_abnormal_events
+    description: 安全异常事件
+    parameters: []
+  
+  - name: security_latest_baseline_analysis
+    description: 最新安全基线
+    parameters: []
+  
+  - name: security_sensitive_scan_lookup
+    description: 敏感数据发现
+    parameters: []

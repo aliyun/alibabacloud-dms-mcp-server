@@ -1,0 +1,53 @@
+name: mongodb-ops
+description: 云数据库MongoDB智能运维技能，支持慢日志分析、空间分析等MongoDB专属功能
+
+parameters:
+  instance_id:
+    type: string
+    description: MongoDB实例ID
+    required: true
+  node_id:
+    type: string
+    description: 节点ID（可选）
+    required: false
+  start_time:
+    type: string
+    description: 开始时间（ISO8601格式）
+    required: false
+  end_time:
+    type: string
+    description: 结束时间（ISO8601格式）
+    required: false
+  top_n:
+    type: string
+    description: 查询前N条记录
+    required: false
+
+operations:
+  - name: mongodb_slowlog_summary
+    description: 慢日志分析（MongoDB）
+    parameters: [instance_id, node_id, start_time, end_time, top_n]
+  
+  - name: important_performance_metrics_summary
+    description: 重要性能指标总结
+    parameters: [instance_id, node_id, start_time, end_time]
+  
+  - name: storage_analyze
+    description: 空间分析
+    parameters: [instance_id, node_id]
+  
+  - name: query_the_instances_that_need_to_be_optimized
+    description: 待优化实例概览
+    parameters: [start_time, end_time]
+  
+  - name: list_instances
+    description: 实例信息查询
+    parameters: []
+  
+  - name: instance_topology_query_tool
+    description: 实例拓扑查询
+    parameters: [instance_id]
+  
+  - name: get_instance_config
+    description: 实例配置查询
+    parameters: [instance_id]
