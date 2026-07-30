@@ -1,0 +1,69 @@
+name: self-hosted-mysql-ops
+description: 自建/他云MySQL智能运维技能，支持SQL优化、死锁分析等基础MySQL功能
+
+parameters:
+  instance_id:
+    type: string
+    description: 自建MySQL实例ID
+    required: true
+  node_id:
+    type: string
+    description: 节点ID（可选）
+    required: false
+  database:
+    type: string
+    description: 数据库名称
+    required: false
+  sql:
+    type: string
+    description: SQL语句
+    required: false
+  start_time:
+    type: string
+    description: 开始时间（ISO8601格式）
+    required: false
+  end_time:
+    type: string
+    description: 结束时间（ISO8601格式）
+    required: false
+
+operations:
+  - name: mysql_query_optimization_advisor
+    description: SQL诊断优化
+    parameters: [instance_id, database, sql]
+  
+  - name: latest_deadlock_analysis
+    description: 最近死锁分析
+    parameters: [instance_id, node_id]
+  
+  - name: real_time_abnormal_session_identification
+    description: 异常会话识别
+    parameters: [instance_id, node_id]
+  
+  - name: storage_analyze
+    description: 空间分析
+    parameters: [instance_id, node_id]
+  
+  - name: auto_increment_usage_analyze
+    description: 自增ID溢出风险
+    parameters: [instance_id]
+  
+  - name: list_instances
+    description: 实例信息查询
+    parameters: []
+  
+  - name: show_create_table
+    description: 查看建表语句
+    parameters: [instance_id, node_id, database, table]
+  
+  - name: security_describe_abnormal_events
+    description: 安全异常事件
+    parameters: []
+  
+  - name: security_latest_baseline_analysis
+    description: 最新安全基线
+    parameters: []
+  
+  - name: security_sensitive_scan_lookup
+    description: 敏感数据发现
+    parameters: []

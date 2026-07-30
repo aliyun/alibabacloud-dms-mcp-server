@@ -1,0 +1,13 @@
+[project]
+name = "das-business-impact-report"
+version = "0.1.0"
+description = "Generate DAS operations daily reports with business impact analysis"
+requires-python = ">=3.8"
+dependencies = [
+    "aliyun-python-sdk-core>=2.13.0",
+    "aliyun-python-sdk-das>=2.0.0",
+    "aliyun-python-sdk-dms-enterprise>=1.0.0",
+]
+
+[tool.uv]
+managed = true
