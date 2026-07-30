@@ -1,0 +1,21 @@
+{
+  "name": "redis-database-operation",
+  "version": "1.0.0",
+  "description": "阿里云 Redis (R-KVStore) 数据库操作 Skill - V1 签名机制",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test-redis.js"
+  },
+  "keywords": [
+    "aliyun",
+    "redis",
+    "kvstore",
+    "tair",
+    "database",
+    "openclaw",
+    "skill"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {}
+}

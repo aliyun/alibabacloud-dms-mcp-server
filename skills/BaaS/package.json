@@ -1,0 +1,45 @@
+{
+  "name": "baas-aliyun-database-service",
+  "version": "1.0.0",
+  "description": "阿里云数据库BaaS服务 - 提供智能架构规划、Schema设计、实例管理、性能优化、稳定性运维等全生命周期数据库服务，整合RDS、PolarDB、Redis、MongoDB、ADB MySQL、Lindorm等8大产品",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test.js",
+    "example": "node examples.js",
+    "lint": "eslint ."
+  },
+  "keywords": [
+    "aliyun",
+    "baas",
+    "backend-as-a-service",
+    "database",
+    "database-service",
+    "architecture",
+    "schema-design",
+    "database-operations",
+    "performance-optimization",
+    "rds",
+    "polardb",
+    "redis",
+    "mongodb",
+    "adb",
+    "lindorm",
+    "skill"
+  ],
+  "author": "OpenClaw",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "dependencies": {},
+  "files": [
+    "index.js",
+    "lib/",
+    "examples/",
+    "examples.js",
+    "test.js",
+    "README.md",
+    "SKILL.md",
+    "API-BEST-PRACTICES.md"
+  ]
+}

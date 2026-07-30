@@ -1,0 +1,20 @@
+{
+  "name": "mongodb-database-operation",
+  "version": "1.0.0",
+  "description": "阿里云 MongoDB (DDS) 数据库操作 Skill - V1 签名机制",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test-mongodb.js"
+  },
+  "keywords": [
+    "aliyun",
+    "mongodb",
+    "dds",
+    "database",
+    "openclaw",
+    "skill"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {}
+}
